@@ -1,0 +1,49 @@
+groups:
+  - name: fintech-workshop-recording-rules
+    rules:
+      - record: job:fintech_request_rate:1m
+        expr: rate(fintech_requests_total[1m])
+      - record: job:fintech_p95_latency:5m
+        expr: histogram_quantile(0.95, rate(fintech_request_latency_seconds_bucket[5m]))
+      - record: job:fintech_error_rate:5m
+        expr: rate(fintech_requests_total{status=~"5.."}[5m]) / rate(fintech_requests_total[5m])
+
+  - name: fintech-workshop-alert-rules
+    rules:
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, rate(fintech_request_latency_seconds_bucket[5m])) > 2
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Высокий P95 latency на Fintech API"
+          description: "P95 latency {{ $value}}s превышает порог 2s." 
+
+      - alert: HighErrorRate
+        expr: |
+          (rate(fintech_requests_total{status=~"5.."}[5m]) / rate(fintech_requests_total[5m])) > 0.1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Высокий error rate Fintech API"
+          description: "Процент 5xx > 10%."
+
+      - alert: DBSlowTransactions
+        expr: fintech_active_transactions > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "БД: много активных транзакций"
+          description: "fintech_active_transactions > 10." 
+
+      - alert: MemoryPressure
+        expr: container_memory_usage_bytes{container="workshop_devops_with_app-app-1"} > 450e6
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Высокое потребление памяти приложения"
+          description: "Memory usage > 450MB"
