@@ -211,7 +211,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "rate(container_cpu_usage_seconds_total{container=\"workshop_devops_with_app-app-1\"}[5m]) * 100",
+          "expr": "rate(container_cpu_usage_seconds_total{container=\"workshop_devops_with_app-app-1\"}[1m]) * 100",
           "legendFormat": "CPU %",
           "refId": "A"
         }
@@ -363,7 +363,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "rate(container_network_receive_bytes_total{container=\"workshop_devops_with_app-app-1\"}[5m])",
+          "expr": "rate(container_network_receive_bytes_total{container=\"workshop_devops_with_app-app-1\"}[1m])",
           "legendFormat": "Входящий",
           "refId": "A"
         },
@@ -372,7 +372,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "rate(container_network_transmit_bytes_total{container=\"workshop_devops_with_app-app-1\"}[5m])",
+          "expr": "rate(container_network_transmit_bytes_total{container=\"workshop_devops_with_app-app-1\"}[1m])",
           "legendFormat": "Исходящий",
           "refId": "B"
         }
@@ -497,9 +497,10 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-15m",
     "to": "now"
   },
+  "refresh": "5s",
   "timepicker": {},
   "timezone": "",
   "title": "Fintech Workshop - Ресурсы контейнеров",
