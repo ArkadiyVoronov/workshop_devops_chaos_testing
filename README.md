@@ -42,6 +42,11 @@ bash scripts/check_setup.sh
 
 ---
 
+### 🎯 Способ 4: Stackblitz
+https://stackblitz.com/github/ArkadiyVoronov/workshop_devops_chaos_testing
+
+---
+
 ## 🎬 Запуск первого кейса (5 минут)
 
 ### Базовая проверка
