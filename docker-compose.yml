@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   app:
     build: .
@@ -10,12 +12,12 @@ services:
         condition: service_healthy
     networks:
       - backend
-      - monitoring
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   db:
     image: postgres:15-alpine
@@ -25,9 +27,6 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    ports:
-      - "5432:5432"
     networks:
       - backend
     healthcheck:
@@ -35,42 +34,42 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   prometheus:
     image: prom/prometheus:v2.47.0
-    volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./config/prometheus.rules.yml:/etc/prometheus/prometheus.rules.yml:ro
-      - prometheus_data:/prometheus
     ports:
       - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
     networks:
-      - monitoring
+      - backend
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:10.1.0
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=workshop
-    volumes:
-      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - grafana_data:/var/lib/grafana
+      - GF_USERS_ALLOW_SIGN_UP=false
     ports:
       - "3000:3000"
-    networks:
-      - monitoring
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - prometheus
+    networks:
+      - backend
+    restart: unless-stopped
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
-    container_name: cadvisor
     ports:
       - "8080:8080"
     volumes:
@@ -78,17 +77,17 @@ services:
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
     networks:
-      - monitoring
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'
-          memory: 128M
-        
+      - backend
+    restart: unless-stopped
+
 networks:
   backend:
-  monitoring:
+    driver: bridge
 
 volumes:
   postgres_data:
