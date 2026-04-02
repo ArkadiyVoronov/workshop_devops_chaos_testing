@@ -15,34 +15,86 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 🔥 1. Включаем Docker Buildx (для кэширования)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
+      # 🔥 2. Кэшируем Docker-образы
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      # 🔥 3. Включаем BuildKit для docker compose
+      - name: Build with cache
+        env:
+          DOCKER_BUILDKIT: 1
+          COMPOSE_DOCKER_CLI_BUILD: 1
+        run: |
+          # Предварительная сборка с кэшем
+          docker compose build --progress=plain \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --cache-from type=local,src=/tmp/.buildx-cache \
+            --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max
+          
+          # Перемещаем кэш для следующего запуска
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
       - name: Set up Docker Compose
         uses: docker/setup-compose-action@v2
         with:
           version: latest
 
-      - name: Build and start services
+      - name: Start services
         run: |
-          docker compose up -d --build
-          sleep 30  # Ждём старта сервисов
+          docker compose up -d
+          sleep 30
 
       - name: Health checks
         run: |
           # Проверка приложения
+          echo "🔍 Checking app health..."
           curl -f http://localhost:5000/health || exit 1
           
           # Проверка Prometheus
+          echo "🔍 Checking Prometheus..."
           curl -f http://localhost:9090/-/healthy || exit 1
           
           # Проверка Grafana
+          echo "🔍 Checking Grafana..."
           curl -f http://localhost:3000/api/health -u admin:workshop || exit 1
           
           # Проверка метрик
+          echo "🔍 Checking metrics..."
           curl -s http://localhost:5000/metrics | grep -q "fintech_requests_total" || exit 1
+          
+          echo "✅ All health checks passed!"
+
+      - name: Show container status
+        run: |
+          echo "📊 Container status:"
+          docker compose ps
+          
+          echo "📊 Resource usage:"
+          docker stats --no-stream
 
       - name: Show logs on failure
         if: failure()
-        run: docker compose logs
+        run: |
+          echo "❌ Tests failed! Showing logs:"
+          docker compose logs --tail=100
 
       - name: Cleanup
         if: always()
-        run: docker compose down -v
+        run: |
+          echo "🧹 Cleaning up..."
+          docker compose down -v
+          docker system prune -f
