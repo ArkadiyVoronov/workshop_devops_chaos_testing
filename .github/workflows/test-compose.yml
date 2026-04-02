@@ -1,0 +1,48 @@
+name: Test Docker Compose Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@v2
+        with:
+          version: latest
+
+      - name: Build and start services
+        run: |
+          docker compose up -d --build
+          sleep 30  # Ждём старта сервисов
+
+      - name: Health checks
+        run: |
+          # Проверка приложения
+          curl -f http://localhost:5000/health || exit 1
+          
+          # Проверка Prometheus
+          curl -f http://localhost:9090/-/healthy || exit 1
+          
+          # Проверка Grafana
+          curl -f http://localhost:3000/api/health -u admin:workshop || exit 1
+          
+          # Проверка метрик
+          curl -s http://localhost:5000/metrics | grep -q "fintech_requests_total" || exit 1
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
