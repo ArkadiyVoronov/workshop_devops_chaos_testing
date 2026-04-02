@@ -1,16 +1,21 @@
 global:
-  scrape_interval: 2s
+  scrape_interval: 2s  # Чаще собираем метрики для теста
   evaluation_interval: 2s
 
-rule_files:
-  - "/etc/prometheus/prometheus.rules.yml"
-
 scrape_configs:
-  - job_name: 'fintech-api'
+  # Prometheus сам себя
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Ваше приложение (если экспортирует метрики)
+  - job_name: 'app'
     static_configs:
       - targets: ['app:5000']
-    metrics_path: '/metrics'
+    metrics_path: '/metrics'  # Стандартный путь для метрик
 
+  # cAdvisor — метрики контейнеров
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['cadvisor:8080']
+    metrics_path: '/metrics'
