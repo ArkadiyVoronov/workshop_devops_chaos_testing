@@ -3,10 +3,6 @@ version: '3.8'
 services:
   app:
     build: .
-      contex: .
-      cashe_from:
-        - python:3.11-slim
-        - workshop_devops_chaos_testing_app:latest
     ports:
       - "5000:5000"
     environment:
