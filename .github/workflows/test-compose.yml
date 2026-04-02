@@ -1,90 +1,28 @@
-name: Test Docker Compose Build
+name: Test Docker Compose
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: [push, pull_request]
 
 jobs:
-  test-compose:
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 🔥 Включаем Docker Buildx (для кэширования слоёв)
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # 🔥 Кэшируем образы (автоматически через GitHub Cache)
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      # 🔥 Сборка с кэшированием (правильный способ для docker compose)
-      - name: Build services with cache
+      - uses: actions/checkout@v4
+      
+      - name: Build and start
         env:
           DOCKER_BUILDKIT: 1
-          COMPOSE_DOCKER_CLI_BUILD: 1
-          BUILDKIT_INLINE_CACHE: 1
-        run: |
-          # Предварительная загрузка кэша
-          if [ -d /tmp/.buildx-cache ]; then
-            echo "📦 Restoring cache..."
-          fi
-          
-          # Сборка с автоматическим кэшированием
-          docker compose build --progress=plain
-          
-          # Сохранение кэша для следующего запуска
-          mkdir -p /tmp/.buildx-cache
-          docker images --digests --format "{{.Repository}}:{{.Tag}}@{{.Digest}}" | grep workshop > /tmp/.buildx-cache/images.txt || true
-
-      - name: Start services
-        run: |
-          docker compose up -d
-          echo "⏳ Waiting for services to start..."
-          sleep 45
-
+        run: docker compose up -d --build
+        
+      - name: Wait
+        run: sleep 45
+        
       - name: Health checks
         run: |
-          echo "🔍 Checking app health..."
-          curl -sf http://localhost:5000/health || { echo "❌ App unhealthy"; exit 1; }
+          curl -f http://localhost:5000/health
+          curl -f http://localhost:9090/-/healthy
+          curl -f http://localhost:3000/api/health -u admin:workshop
+          curl -s http://localhost:5000/metrics | grep -q fintech_requests_total
           
-          echo "🔍 Checking Prometheus..."
-          curl -sf http://localhost:9090/-/healthy || { echo "❌ Prometheus unhealthy"; exit 1; }
-          
-          echo "🔍 Checking Grafana..."
-          curl -sf http://localhost:3000/api/health -u admin:workshop || { echo "❌ Grafana unhealthy"; exit 1; }
-          
-          echo "🔍 Checking metrics export..."
-          curl -sf http://localhost:5000/metrics | grep -q "fintech_requests_total" || { echo "❌ Metrics not found"; exit 1; }
-          
-          echo "✅ All health checks passed!"
-
-      - name: Show container status
-        run: |
-          echo "📊 Container status:"
-          docker compose ps
-          echo "📊 Resource usage:"
-          docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
-
-      - name: Show logs on failure
-        if: failure()
-        run: |
-          echo "❌ Tests failed! Showing logs:"
-          docker compose logs --tail=100
-
       - name: Cleanup
         if: always()
-        run: |
-          echo "🧹 Cleaning up..."
-          docker compose down -v
-          docker system prune -f --volumes
+        run: docker compose down -v
