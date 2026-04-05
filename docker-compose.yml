@@ -1,26 +1,23 @@
----
+version: '3.8'
+
 services:
   app:
     build: .
     ports:
-      - 5000:5000
+      - "5000:5000"  # Убедись, что в панели Timeweb открыт порт 5000
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - backend
     restart: unless-stopped
     healthcheck:
-      test:
-        - CMD
-        - curl
-        - -f
-        - http://localhost:5000/health
+      # Используем wget или python, так как curl может не быть в образе
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:5000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
+
   db:
     image: postgres:15-alpine
     environment:
@@ -29,66 +26,18 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - backend
     healthcheck:
-      test:
-        - CMD-SHELL
-        - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
     restart: unless-stopped
-  prometheus:
-    image: prom/prometheus:v2.47.0
-    ports:
-      - 9090:9090
-    volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=7d
-    networks:
-      - backend
-    restart: unless-stopped
-  grafana:
-    image: grafana/grafana:10.1.0
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=workshop
-      - GF_USERS_ALLOW_SIGN_UP=false
-    ports:
-      - 3000:3000
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
-    depends_on:
-      - prometheus
-    networks:
-      - backend
-    restart: unless-stopped
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.47.0
-    ports:
-      - 8080:8080
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    privileged: true
-    devices:
-      - /dev/kmsg
-    networks:
-      - backend
-    restart: unless-stopped
+
+# Сервисы мониторинга (prometheus, grafana, cadvisor) удалены для стабильности первого запуска
+
 networks:
-  backend:
+  default:
     driver: bridge
+
 volumes:
-  postgres_data: null
-  prometheus_data: null
-  grafana_data: null
+  postgres_data:
