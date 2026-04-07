@@ -1,1 +1,3 @@
-Nothing should be ignored based on the provided file changes, as they consist only of source/config files (.md, Dockerfile, docker-compose.yml) without any build artifacts, dependencies, or temporary files.
+
+# Documentation
+DEPLOYMENT.md
