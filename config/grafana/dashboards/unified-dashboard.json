@@ -1148,4 +1148,34 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B209
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "up",
+          "legendFormat": "{{job}} ({{instance}})",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "fintech",
+    "workshop",
+    "chaos-engineering"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "🦞 Fintech Workshop: Unified Dashboard",
+  "uid": "unified-dashboard",
+  "version": 1,
+  "weekStart": ""
+}
