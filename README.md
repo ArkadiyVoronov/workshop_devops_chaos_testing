@@ -52,12 +52,12 @@ https://stackblitz.com/github/ArkadiyVoronov/workshop_devops_chaos_testing
 ### Базовая проверка
 ```bash
 # Проверить здоровье сервисов
-curl http://localhost:5000/health
+curl http://72.56.8.118:5000/health
 
 # Открыть дашборды
-# Prometheus:  http://localhost:9090
-# Grafana:     http://localhost:3000 (admin/workshop)
-# cAdvisor:    http://localhost:8080
+# Prometheus:  http://72.56.8.118:9090
+# Grafana:     http://72.56.8.118:3000 (admin/workshop)
+# cAdvisor:    http://72.56.8.118:8080
 ```
 
 ### Инъекция отказа (пример: latency)
@@ -66,7 +66,7 @@ curl http://localhost:5000/health
 bash scripts/run_latency.sh
 
 # Способ 2: прямой curl (если нужна кастомизация)
-curl -X POST http://localhost:5000/api/failures \
+curl -X POST http://72.56.8.118:5000/api/failures \
   -H "Content-Type: application/json" \
   -d '{"latency_ms": 3000}'
 ```
@@ -81,7 +81,7 @@ curl -X POST http://localhost:5000/api/failures \
 ### Сброс после кейса
 ```bash
 bash scripts/reset.sh
-# или: curl -X POST http://localhost:5000/api/reset
+# или: curl -X POST http://72.56.8.118:5000/api/reset
 ```
 > ⚠️ **Важно:** Это учебное приложение. Оно **имитирует** сбои, но не имеет встроенных механизмов автоматического восстановления (Circuit Breaker, Retry).
 > Восстановление производится вручную через `/api/reset` для целей обучения.
@@ -98,10 +98,10 @@ bash scripts/reset.sh
 
 | Сервис | URL | Назначение | Учётные данные |
 | :-- | :-- | :-- | :-- |
-| **Fintech API** | http://localhost:5000 | Основное приложение | — |
-| **Prometheus** | http://localhost:9090 | Сбор и хранение метрик | — |
-| **cAdviser** | http://localhost:8080 | Сбор и хранение метрик | — |
-| **Grafana** | http://localhost:3000 | Визуализация метрик | `admin` / `workshop` |
+| **Fintech API** | http://72.56.8.118:5000 | Основное приложение | — |
+| **Prometheus** | http://72.56.8.118:9090 | Сбор и хранение метрик | — |
+| **cAdviser** | http://72.56.8.118:8080 | Сбор и хранение метрик | — |
+| **Grafana** | http://72.56.8.118:3000 | Визуализация метрик | `admin` / `workshop` |
 
 ---
 
@@ -245,13 +245,13 @@ bash scripts/check_setup.sh
 bash scripts/check_setup.sh
 
 # 2. Приложение отвечает?
-curl -s http://localhost:5000/health | jq .
+curl -s http://72.56.8.118:5000/health | jq .
 
 # 3. Prometheus собирает метрики?
-curl -s http://localhost:9090/api/v1/query?query=up | jq '.data.result[0]'
+curl -s http://72.56.8.118:9090/api/v1/query?query=up | jq '.data.result[0]'
 
 # 4. Grafana видит Prometheus?
-curl -s http://localhost:3000/api/datasources | jq '.[] | {name, url}'
+curl -s http://72.56.8.118:3000/api/datasources | jq '.[] | {name, url}'
 ```
 
 ---
