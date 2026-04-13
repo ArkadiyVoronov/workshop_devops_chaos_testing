@@ -1,3 +1,4 @@
-
-# Documentation
-DEPLOYMENT.md
+```
+# Grafana provisioning files
+config/grafana/provisioning/**
+```
