@@ -4,6 +4,7 @@
 *.tmp
 *.swp
 
+
 # Environment
 .env
 .env.local
@@ -57,4 +58,22 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
+```
+=======
+=======
+
+# Examples 1:
+# Project with only source/config files - no artifacts
+
+# Example 2:
+# Project with artifacts - needs ignores
+*.pyc
+__pycache__/
+*.log
+.env
+.env.local
+.vscode/
+=======
+```
+config/grafana/provisioning/**
 ```
