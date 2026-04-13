@@ -18,6 +18,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    networks:
+      - monitoring
 
   db:
     image: postgres:15-alpine

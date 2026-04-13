@@ -59,8 +59,6 @@ htmlcov/
 *.tar.xz
 *.tar.zst
 ```
-=======
-=======
 
 # Examples 1:
 # Project with only source/config files - no artifacts
@@ -73,7 +71,6 @@ __pycache__/
 .env
 .env.local
 .vscode/
-=======
 ```
 config/grafana/provisioning/**
 ```
