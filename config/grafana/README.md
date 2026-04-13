@@ -64,7 +64,7 @@ config/grafana/
 | 7 | **HTTP Status Codes** | Статусы HTTP ответов | `sum by (status) (rate(fintech_requests_total[5m]))` |
 | 8 | **Container Restarts** | Перезапуски контейнеров | `container_last_seen` |
 | 9 | **Network Traffic** | Сетевой трафик | `container_network_receive/transmit_bytes_total` |
-| 10 | **Service Health** | Статус сервисов | `up{job="app/db"}` |
+| 10 | **Service Health** | Статус сервисов | `up{job="app"}` |
 | 11 | **Alerts Summary** | Сводка алертов | `ALERTS` |
 
 ## 🛠️ Создание нового дашборда
