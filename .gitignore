@@ -1,4 +1,11 @@
-```
-# Grafana provisioning files
-config/grafana/provisioning/**
-```
+# Examples 1:
+# Project with only source/config files - no artifacts
+
+# Example 2:
+# Project with artifacts - needs ignores
+*.pyc
+__pycache__/
+*.log
+.env
+.env.local
+.vscode/
