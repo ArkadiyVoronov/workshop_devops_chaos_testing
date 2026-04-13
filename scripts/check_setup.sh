@@ -32,6 +32,15 @@ fi
 
 echo "  Grafana health -> $status"
 
+echo "5) Проверяем cAdvisor..."
+status=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:8080/healthz)
+if [[ "$status" != "200" ]]; then
+  echo "ERROR: cAdvisor health вернул $status" >&2
+  exit 1
+fi
+
+echo "  cAdvisor health -> $status"
+
 # Проверка базовых метрик
 if ! curl -s http://localhost:5000/metrics | grep -q "fintech_requests_total"; then
   echo "ERROR: в /metrics не найден fintech_requests_total" >&2
@@ -44,3 +53,10 @@ echo "Запуск:
   docker compose up -d --build
   bash scripts/check_setup.sh
   bash scripts/run_latency.sh (или другой кейс)"
+
+echo ""
+echo "Доступные сервисы:
+  - Приложение: http://localhost:5000
+  - Prometheus: http://localhost:9090
+  - Grafana:    http://localhost:3000 (admin/workshop)
+  - cAdvisor:   http://localhost:8080"
