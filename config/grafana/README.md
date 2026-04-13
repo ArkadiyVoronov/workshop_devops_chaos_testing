@@ -56,7 +56,7 @@ config/grafana/
 | № | Панель | Описание | Метрики |
 |---|--------|----------|---------|
 | 1 | **Request Rate (RPS)** | Запросы в секунду | `rate(fintech_requests_total[1m])` |
-| 2 | **Latency p95/p99** | Задержки ответа | `histogram_quantile(0.95/0.99, rate(fintech_request_latency_seconds_bucket[5m]))` |
+| 2 | **Latency p95/p99** | Задержки ответа | `histogram_quantile(0.95, rate(fintech_request_latency_seconds_bucket[5m]))` |
 | 3 | **Error Rate** | Процент ошибок | `rate(fintech_requests_total{status=~"5.."}[5m]) / rate(fintech_requests_total[5m])` |
 | 4 | **Active Transactions** | Активные транзакции | `fintech_active_transactions` |
 | 5 | **Container CPU Usage** | Использование CPU контейнерами | `rate(container_cpu_usage_seconds_total[1m]) * 100` |
