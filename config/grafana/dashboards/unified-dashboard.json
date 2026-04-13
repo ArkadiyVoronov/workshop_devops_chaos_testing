@@ -424,7 +424,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "container_restart_count{container=\"workshop_devops_with_app-app-1\"}",
+          "expr": "container_restart_count{container_label_com_docker_compose_service=\"app\"}",
           "legendFormat": "Restarts",
           "refId": "A"
         }
