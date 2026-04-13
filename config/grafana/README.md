@@ -29,7 +29,11 @@ config/grafana/
 
 2. **Ручной импорт через UI**
    - Откройте Grafana в браузере (обычно http://localhost:3000)
+
    - Войдите под учётной записью admin/workshop
+=======
+   - Войдите под учётной записью admin/admin
+
    - Перейдите: **Dashboards** → **Import**
    - Загрузите файл `unified-dashboard.json` или вставьте его содержимое
    - Выберите источник данных Prometheus

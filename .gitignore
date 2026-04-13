@@ -1,5 +1,23 @@
+
 ```markdown
 # Configuration and source files only
 # No build artifacts, dependencies, or temp files detected in changes
 # Keeping .gitignore minimal for version control best practices
+```
+=======
+
+# Examples 1:
+# Project with only source/config files - no artifacts
+
+# Example 2:
+# Project with artifacts - needs ignores
+*.pyc
+__pycache__/
+*.log
+.env
+.env.local
+.vscode/
+=======
+```
+config/grafana/provisioning/**
 ```
