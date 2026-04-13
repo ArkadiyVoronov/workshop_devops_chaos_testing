@@ -29,7 +29,11 @@ config/grafana/
 
 2. **Ручной импорт через UI**
    - Откройте Grafana в браузере (обычно http://localhost:3000)
+
+   - Войдите под учётной записью admin/workshop
+=======
    - Войдите под учётной записью admin/admin
+
    - Перейдите: **Dashboards** → **Import**
    - Загрузите файл `unified-dashboard.json` или вставьте его содержимое
    - Выберите источник данных Prometheus
@@ -52,7 +56,7 @@ config/grafana/
 | № | Панель | Описание | Метрики |
 |---|--------|----------|---------|
 | 1 | **Request Rate (RPS)** | Запросы в секунду | `rate(fintech_requests_total[1m])` |
-| 2 | **Latency p95/p99** | Задержки ответа | `histogram_quantile(0.95/0.99, rate(fintech_request_latency_seconds_bucket[5m]))` |
+| 2 | **Latency p95/p99** | Задержки ответа | `histogram_quantile(0.95, rate(fintech_request_latency_seconds_bucket[5m]))` |
 | 3 | **Error Rate** | Процент ошибок | `rate(fintech_requests_total{status=~"5.."}[5m]) / rate(fintech_requests_total[5m])` |
 | 4 | **Active Transactions** | Активные транзакции | `fintech_active_transactions` |
 | 5 | **Container CPU Usage** | Использование CPU контейнерами | `rate(container_cpu_usage_seconds_total[1m]) * 100` |
@@ -60,7 +64,7 @@ config/grafana/
 | 7 | **HTTP Status Codes** | Статусы HTTP ответов | `sum by (status) (rate(fintech_requests_total[5m]))` |
 | 8 | **Container Restarts** | Перезапуски контейнеров | `container_last_seen` |
 | 9 | **Network Traffic** | Сетевой трафик | `container_network_receive/transmit_bytes_total` |
-| 10 | **Service Health** | Статус сервисов | `up{job="app/db"}` |
+| 10 | **Service Health** | Статус сервисов | `up{job="app"}` |
 | 11 | **Alerts Summary** | Сводка алертов | `ALERTS` |
 
 ## 🛠️ Создание нового дашборда

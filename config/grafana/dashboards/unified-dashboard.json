@@ -29,6 +29,8 @@
 
         "uid": "PBFA97CFB590B2093"
 
+        "uid": "PBFA97CFB590B2093"
+
         "uid": "${DS_PROMETHEUS}"
 
       },
@@ -288,6 +290,9 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
+
+          "expr": "rate(fintech_requests_total{status=~\"5..\"}[1m]) / rate(fintech_requests_total[1m]) * 100",
+
 
           "expr": "rate(fintech_requests_total{status=~\"5..\"}[1m]) / rate(fintech_requests_total[1m]) * 100",
 
