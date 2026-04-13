@@ -86,7 +86,7 @@ job:fintech_error_rate:5m
 - **Логин:** `admin`
 - **Пароль:** `workshop`
 
-Grafana подключена к Prometheus автоматически через provisioning (`config/grafana/provisioning/datasources/datasources.yml`).
+Grafana подключена к Prometheus автоматически через provisioning (`config/grafana/provisioning/datasources/prometheus.yaml`).
 
 ### Проверка подключения (первый запуск)
 
@@ -109,13 +109,15 @@ Grafana подключена к Prometheus автоматически через
    - **Панель 3: Error Rate** (доля ошибок)
    - **Панель 4: Active Transactions** (текущие запросы)
 
-**Вариант 2: Импорт готового дашборда**
-Готовый дашборд уже в репо: `config/grafana/provisioning/dashboards/workshop-dashboard.json`
+**Вариант 2: Импорт готового объединённого дашборда (рекомендуется)**
+Готовый объединённый дашборд уже в репо: `config/grafana/provisioning/dashboards/unified-dashboard.json`
 
 В Grafana это работает автоматически (provisioning), но если нужен ручной импорт:
 1. Откройте Grafana → **Dashboards → Import**
-2. Загрузите файл `config/grafana/provisioning/dashboards/workshop-dashboard.json`
+2. Загрузите файл `config/grafana/provisioning/dashboards/unified-dashboard.json`
 3. Выберите datasource `Prometheus` → нажмите **Import**
+
+Дашборд содержит 11 панелей с всеми ключевыми метриками и алертами. Подробная документация: `config/grafana/README.md`
 
 ### Рекомендуемые панели (copy-paste в Grafana)
 
