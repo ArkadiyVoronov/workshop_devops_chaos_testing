@@ -18,6 +18,16 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    # Strict resource limits to protect host
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    memswap_limit: 256M
 
   db:
     image: public.ecr.aws/bitnami/postgresql:15.4.0
@@ -33,6 +43,16 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    # Strict resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    memswap_limit: 256M
 
   prometheus:
     image: quay.io/prometheus/prometheus:latest
@@ -50,6 +70,16 @@ services:
       - '--storage.tsdb.retention.time=7d'
       - '--web.enable-lifecycle'
     restart: unless-stopped
+    # Strict resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    memswap_limit: 128M
 
   grafana:
     image: grafana/grafana:latest
@@ -66,6 +96,16 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
+    # Strict resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    memswap_limit: 128M
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -79,6 +119,16 @@ services:
       - /dev/disk/:/dev/disk:ro
     privileged: true
     restart: unless-stopped
+    # Strict resource limits (cadvisor needs less)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 64M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    memswap_limit: 64M
 
 networks:
   default:
