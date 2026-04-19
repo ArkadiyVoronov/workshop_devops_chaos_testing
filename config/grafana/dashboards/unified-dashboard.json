@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Fintech Workshop: Объединённый дашборд для мониторинга приложения и ресурсов",
+  "description": "Fintech Workshop: Unified dashboard for all 5 chaos engineering cases. Shows metrics and alerts for Latency, Error Rate, DB Slow, Memory Leak, and Chaos Mix scenarios.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -26,7 +26,127 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "HighLatency"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "HighErrorRate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DBSlowTransactions"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "MemoryPressure"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "title": "🚨 ACTIVE ALERTS (Firing)",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "ALERTS{alertstate=\"firing\"}",
+          "legendFormat": "{{alertname}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
       },
       "fieldConfig": {
         "defaults": {
@@ -68,10 +188,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
@@ -83,9 +199,9 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 4
       },
-      "id": 1,
+      "id": 2,
       "options": {
         "legend": {
           "calcs": [
@@ -102,7 +218,7 @@
           "sort": "desc"
         }
       },
-      "title": "📊 Запросы в секунду (RPS)",
+      "title": "📊 Requests per Second (RPS)",
       "type": "timeseries",
       "targets": [
         {
@@ -127,7 +243,7 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "Секунды",
+            "axisLabel": "Seconds",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -180,9 +296,9 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 4
       },
-      "id": 2,
+      "id": 3,
       "options": {
         "legend": {
           "calcs": [
@@ -199,7 +315,7 @@
           "sort": "desc"
         }
       },
-      "title": "⏱️ Latency (P95/P99)",
+      "title": "⏱️ Latency P95/P99 — Case 1",
       "type": "timeseries",
       "targets": [
         {
@@ -208,7 +324,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "expr": "histogram_quantile(0.95, rate(fintech_request_latency_seconds_bucket[1m]))",
-          "legendFormat": "P95 latency",
+          "legendFormat": "P95",
           "refId": "A"
         },
         {
@@ -217,7 +333,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "expr": "histogram_quantile(0.99, rate(fintech_request_latency_seconds_bucket[1m]))",
-          "legendFormat": "P99 latency",
+          "legendFormat": "P99",
           "refId": "B"
         }
       ]
@@ -258,12 +374,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 6,
         "x": 0,
-        "y": 8
+        "y": 12
       },
-      "id": 3,
+      "id": 4,
       "options": {
         "orientation": "auto",
         "reduceOptions": {
@@ -276,7 +392,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "title": "🔥 Error Rate",
+      "title": "🔥 Error Rate % — Case 2",
       "type": "gauge",
       "targets": [
         {
@@ -284,18 +400,8 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-
-          "expr": "rate(fintech_requests_total{status=~\"5..\"}[1m]) / rate(fintech_requests_total[1m]) * 100",
-
-          "expr": "rate(fintech_requests_total{status=~\"5..\"}[1m]) / rate(fintech_requests_total[1m]) * 100",
-
-
-          "expr": "rate(fintech_requests_total{status=~\"5..\"}[1m]) / rate(fintech_requests_total[1m]) * 100",
-
           "expr": "(rate(fintech_requests_total{status=~\"5..\"}[1m]) / rate(fintech_requests_total[1m]) * 100) or vector(0)",
-
-
-          "legendFormat": "Error Rate %",
+          "legendFormat": "Error Rate",
           "refId": "A"
         }
       ]
@@ -333,12 +439,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 6,
         "x": 6,
-        "y": 8
+        "y": 12
       },
-      "id": 4,
+      "id": 5,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -353,7 +459,7 @@
         },
         "textMode": "auto"
       },
-      "title": "💾 Активные транзакции",
+      "title": "💾 Active Transactions — Case 3",
       "type": "stat",
       "targets": [
         {
@@ -362,7 +468,74 @@
             "uid": "PBFA97CFB590B2093"
           },
           "expr": "fintech_active_transactions",
-          "legendFormat": "Active Transactions",
+          "legendFormat": "Active TX",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 300000000
+              },
+              {
+                "color": "red",
+                "value": 450000000
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 12
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "title": "🧠 Memory Usage — Case 4",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "container_memory_usage_bytes{container=~\".*app.*\"}",
+          "legendFormat": "App Memory",
           "refId": "A"
         }
       ]
@@ -396,12 +569,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 6,
-        "x": 12,
-        "y": 8
+        "x": 18,
+        "y": 12
       },
-      "id": 5,
+      "id": 7,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -416,7 +589,7 @@
         },
         "textMode": "auto"
       },
-      "title": "🔄 Перезапуски контейнера",
+      "title": "🔄 Container Restarts",
       "type": "stat",
       "targets": [
         {
@@ -424,8 +597,8 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "container_restart_count{container_label_com_docker_compose_service=\"app\"}",
-          "legendFormat": "Restarts",
+          "expr": "increase(container_restart_count{container_label_com_docker_compose_service=\"app\"}[5m])",
+          "legendFormat": "Restarts (5m)",
           "refId": "A"
         }
       ]
@@ -441,7 +614,7 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "Количество",
+            "axisLabel": "Count",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "bars",
@@ -484,21 +657,6 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "5xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
               "options": "2xx"
             },
             "properties": [
@@ -510,6 +668,21 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
@@ -517,9 +690,9 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 12
+        "y": 17
       },
-      "id": 6,
+      "id": 8,
       "options": {
         "legend": {
           "calcs": [
@@ -534,7 +707,7 @@
           "sort": "desc"
         }
       },
-      "title": "📈 Статусы ответов",
+      "title": "📈 HTTP Status Codes (2xx vs 5xx)",
       "type": "timeseries",
       "targets": [
         {
@@ -621,193 +794,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 12
-      },
-      "id": 7,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "title": "📊 Использование памяти приложением",
-      "type": "timeseries",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "container_memory_usage_bytes{container=\"workshop_devops_with_app-app-1\"}",
-          "legendFormat": "Память контейнера App",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "%",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "scheme",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 20
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "title": "⚙️ Использование CPU",
-      "type": "timeseries",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "rate(container_cpu_usage_seconds_total{container=\"workshop_devops_with_app-app-1\"}[1m]) * 100",
-          "legendFormat": "CPU %",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "Байты/сек",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "scheme",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 20
+        "y": 17
       },
       "id": 9,
       "options": {
@@ -826,7 +813,7 @@
           "sort": "desc"
         }
       },
-      "title": "🌐 Сетевой трафик",
+      "title": "🧠 Memory History — Case 4",
       "type": "timeseries",
       "targets": [
         {
@@ -834,18 +821,9 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "rate(container_network_receive_bytes_total{container=\"workshop_devops_with_app-app-1\"}[1m])",
-          "legendFormat": "Входящий",
+          "expr": "container_memory_usage_bytes{container=~\".*app.*\"}",
+          "legendFormat": "App Container",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "rate(container_network_transmit_bytes_total{container=\"workshop_devops_with_app-app-1\"}[1m])",
-          "legendFormat": "Исходящий",
-          "refId": "B"
         }
       ]
     },
@@ -860,7 +838,7 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "",
+            "axisLabel": "Transactions",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -896,26 +874,31 @@
                 "value": null
               },
               {
+                "color": "yellow",
+                "value": 5
+              },
+              {
                 "color": "red",
-                "value": 1
+                "value": 10
               }
             ]
           },
-          "unit": "bool_yes_no"
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 12,
         "x": 0,
-        "y": 28
+        "y": 25
       },
       "id": 10,
       "options": {
         "legend": {
           "calcs": [
             "mean",
+            "max",
             "lastNotNull"
           ],
           "displayMode": "table",
@@ -923,11 +906,11 @@
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "desc"
         }
       },
-      "title": "🚨 Состояние алертов",
+      "title": "💾 Active Transactions History — Case 3",
       "type": "timeseries",
       "targets": [
         {
@@ -935,8 +918,8 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "ALERTS{alertstate=\"firing\"}",
-          "legendFormat": "{{alertname}}",
+          "expr": "fintech_active_transactions",
+          "legendFormat": "Active TX",
           "refId": "A"
         }
       ]
@@ -997,7 +980,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 28
+        "y": 25
       },
       "id": 11,
       "options": {
@@ -1016,7 +999,7 @@
           "sort": "desc"
         }
       },
-      "title": "💾 Использование памяти всеми контейнерами",
+      "title": "💾 All Containers Memory",
       "type": "timeseries",
       "targets": [
         {
@@ -1024,7 +1007,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "container_memory_usage_bytes{container=\"workshop_devops_with_app-app-1\"}",
+          "expr": "container_memory_usage_bytes{container=~\".*app.*\"}",
           "legendFormat": "App",
           "refId": "A"
         },
@@ -1033,8 +1016,8 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "container_memory_usage_bytes{container=\"workshop_devops_with_app-db-1\"}",
-          "legendFormat": "Database",
+          "expr": "container_memory_usage_bytes{container=~\".*db.*\"}",
+          "legendFormat": "DB",
           "refId": "B"
         },
         {
@@ -1042,7 +1025,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "container_memory_usage_bytes{container=\"workshop_devops_with_app-prometheus-1\"}",
+          "expr": "container_memory_usage_bytes{container=~\".*prometheus.*\"}",
           "legendFormat": "Prometheus",
           "refId": "C"
         },
@@ -1051,15 +1034,145 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "container_memory_usage_bytes{container=\"workshop_devops_with_app-grafana-1\"}",
+          "expr": "container_memory_usage_bytes{container=~\".*grafana.*\"}",
           "legendFormat": "Grafana",
           "refId": "D"
         }
       ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Alert Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "color": "green",
+                        "index": 0,
+                        "text": "inactive"
+                      },
+                      "1": {
+                        "color": "red",
+                        "index": 1,
+                        "text": "firing"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 33
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "title": "📋 Alert Details Table",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "ALERTS",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true
+            },
+            "renameByName": {
+              "Value": "State",
+              "alertname": "Alert Name",
+              "severity": "Severity"
+            }
+          }
+        }
+      ]
     }
   ],
-"schemaVersion": 38,
-"style": "dark",
+  "schemaVersion": 38,
+  "style": "dark",
   "tags": [
     "fintech",
     "workshop",
@@ -1068,16 +1181,28 @@
   ],
   "templating": {
     "list": []
-},
+  },
   "time": {
     "from": "now-15m",
     "to": "now"
   },
-  "refresh": "5s",
-  "timepicker": {},
+  "refresh": "2s",
+  "timepicker": {
+    "refresh_intervals": [
+      "2s",
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h"
+    ]
+  },
   "timezone": "",
-  "title": "🚀 Fintech Workshop — Unified Dashboard",
-  "uid": "fintech-unified-dashboard",
+  "title": "🚀 Fintech Workshop — Unified Dashboard v2",
+  "uid": "fintech-unified-dashboard-v2",
   "version": 1,
   "weekStart": ""
 }

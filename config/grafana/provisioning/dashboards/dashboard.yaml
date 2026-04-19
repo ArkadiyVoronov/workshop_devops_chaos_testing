@@ -11,3 +11,6 @@ providers:
     allowUiUpdates: true
     options:
       path: /etc/grafana/provisioning/dashboards
+      defaultDashboard:
+        title: "🚀 Fintech Workshop — Unified Dashboard v2"
+        uid: "fintech-unified-dashboard-v2"
