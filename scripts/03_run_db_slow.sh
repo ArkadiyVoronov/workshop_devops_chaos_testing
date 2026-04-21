@@ -1,3 +1,4 @@
+# DB lock simulation for queue effect
 #!/usr/bin/env bash
 set -euo pipefail
 

@@ -259,3 +259,4 @@ curl -s http://72.56.8.118:3000/api/datasources | jq '.[] | {name, url}'
 ## Лицензия
 
 MIT
+# Troubleshooting\n- Алерты сбрасываются за 1-2 мин после сброса.\n- Memory leak: Check process_resident_memory_bytes in Prometheus.
