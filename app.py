@@ -119,27 +119,31 @@ def metrics():
 @app.route('/api/balance')
 def get_balance():
     start = time.time()
-    try:
-        inject_failures()
-        
-        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
-        cur = conn.cursor()
-        cur.execute("SELECT account_number, balance FROM accounts WHERE user_id = 1")
-        result = cur.fetchone()
-        cur.close()
-        conn.close()
-        
-        REQUEST_LATENCY.labels(endpoint='/api/balance').observe(time.time() - start)
-        REQUEST_COUNT.labels(method='GET', endpoint='/api/balance', status='200').inc()
-        
-        return jsonify({
-            "account": result[0] if result else "ACC-001",
-            "balance": float(result[1]) if result else 1000.00,
-            "currency": "USD"
-        })
-    except Exception as e:
-        REQUEST_COUNT.labels(method='GET', endpoint='/api/balance', status='500').inc()
-        return jsonify({"error": str(e)}), 500
+    
+    # Используем контекстный менеджер, чтобы увеличить счетчик активных транзакций
+    # Это критично для Кейса 3 (DB Slow), чтобы видеть рост очереди в Grafana
+    with db_transaction():
+        try:
+            inject_failures()
+            
+            conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+            cur = conn.cursor()
+            cur.execute("SELECT account_number, balance FROM accounts WHERE user_id = 1")
+            result = cur.fetchone()
+            cur.close()
+            conn.close()
+            
+            REQUEST_LATENCY.labels(endpoint='/api/balance').observe(time.time() - start)
+            REQUEST_COUNT.labels(method='GET', endpoint='/api/balance', status='200').inc()
+            
+            return jsonify({
+                "account": result[0] if result else "ACC-001",
+                "balance": float(result[1]) if result else 1000.00,
+                "currency": "USD"
+            })
+        except Exception as e:
+            REQUEST_COUNT.labels(method='GET', endpoint='/api/balance', status='500').inc()
+            return jsonify({"error": str(e)}), 500
 
 @app.route('/api/transfer', methods=['POST'])
 def transfer():

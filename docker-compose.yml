@@ -126,15 +126,19 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     privileged: true
+    command: 
+      - '--housekeeping_interval=5s'
+      - '--port=8080'
+      - '--docker_only=true' # Сканируем только docker контейнеры
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          cpus: '0.2'
-          memory: 128M
+          cpus: '0.5'
+          memory: 512M
         reservations:
           cpus: '0.05'
-          memory: 32M
+          memory: 128M
 
 networks:
   default:
