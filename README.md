@@ -33,7 +33,7 @@
 ### 📦 Способ 2: Локально с Docker (Linux / macOS / WSL)
 Если вы хотите запускать проект на своем компьютере:
 ```bash
-git clone <repo>
+git clone https://github.com/ArkadiyVoronov/workshop_devops_chaos_testing.git
 cd workshop_devops_with_app
 docker compose up -d --build
 bash scripts/check_setup.sh
