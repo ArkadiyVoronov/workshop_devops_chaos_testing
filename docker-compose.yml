@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   app:
     build:
@@ -18,48 +20,35 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-<<<<<<< HEAD
-
-  db:
-    image: postgres:15-alpine
-=======
-    # Strict resource limits to protect host
+    # Опционально: лимиты для приложения, если нужно
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 256M
+          cpus: '1.0'
+          memory: 512M
         reservations:
-          cpus: '0.1'
-          memory: 64M
-    memswap_limit: 256M
+          cpus: '0.2'
+          memory: 128M
+    memswap_limit: 512M
 
   db:
+    # Используем официальный образ Bitnami или postgres, здесь оставил Bitnami как во втором блоке
     image: public.ecr.aws/bitnami/postgresql:15.4.0
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-appuser}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-apppass}
       - POSTGRES_DB=${POSTGRES_DB:-appdb}
-<<<<<<< HEAD
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-=======
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
     healthcheck:
+      # Убедимся, что команда работает. Если переменные не подставятся в healthcheck в старых версиях, 
+      # можно заменить на жесткие значения или использовать скрипт.
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-appuser} -d ${POSTGRES_DB:-appdb}"]
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s
     restart: unless-stopped
-<<<<<<< HEAD
-
-=======
-    # Strict resource limits
     deploy:
       resources:
         limits:
@@ -86,7 +75,6 @@ services:
       - '--storage.tsdb.retention.time=7d'
       - '--web.enable-lifecycle'
     restart: unless-stopped
-    # Strict resource limits
     deploy:
       resources:
         limits:
@@ -112,7 +100,6 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
-    # Strict resource limits
     deploy:
       resources:
         limits:
@@ -135,7 +122,6 @@ services:
       - /dev/disk/:/dev/disk:ro
     privileged: true
     restart: unless-stopped
-    # Strict resource limits (cadvisor needs less)
     deploy:
       resources:
         limits:
@@ -145,7 +131,6 @@ services:
           cpus: '0.05'
           memory: 32M
     memswap_limit: 64M
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
 
 networks:
   default:
@@ -153,8 +138,5 @@ networks:
 
 volumes:
   postgres_data:
-<<<<<<< HEAD
-=======
   prometheus_data:
   grafana_data:
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
