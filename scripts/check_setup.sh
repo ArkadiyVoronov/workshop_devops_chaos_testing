@@ -59,28 +59,73 @@ print_header() {
 # ==========================================
 # ОСНОВНОЙ СЦЕНАРИЙ
 # ==========================================
+echo -e "\\n${BOLD}🛡️  FINTECH WORKSHOP: ENVIRONMENT CHECK${NC}"
+echo -e "${CYAN}Анализируем вашу систему перед запуском...${NC}\\n"
 
-echo -e "\\n${BOLD}️  FINTECH WORKSHOP: DIAGNOSTIC CHECK${NC}"
-echo -e "${CYAN}Проверяем готовность инфраструктуры к хаос-экспериментам...${NC}\\n"
+OS_TYPE="unknown"
+IS_WINDOWS_SUBSYSTEM=false
 
-ERRORS_FOUND=0
+# Определяем ОС
+if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+  OS_TYPE="Windows Native (CMD/PowerShell)"
+elif [[ "$OSTYPE" == "linux-gnu" ]]; then
+  # Проверяем, не WSL ли это
+  if grep -qi microsoft /proc/version 2>/dev/null; then
+    OS_TYPE="WSL (Windows Subsystem for Linux)"
+    IS_WINDOWS_SUBSYSTEM=true
+  else
+    OS_TYPE="Linux (Native)"
+  fi
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  OS_TYPE="macOS"
+else
+  OS_TYPE="Unknown ($OSTYPE)"
+fi
 
-# --- 1. Docker Compose Status ---
+echo -e "${BLUE}Обнаружена система: ${OS_TYPE}${NC}"
+
+# Логика для разных ОС
+if [[ "$OS_TYPE" == "Windows Native (CMD/PowerShell)" ]]; then
+  echo -e "\\n${RED}⚠️  ВНИМАНИЕ: Вы запускаете скрипт из обычной PowerShell или CMD.${NC}"
+  echo -e "${YELLOW}Этот воркшоп требует Linux-окружения для работы Bash-скриптов и Docker Compose.${NC}"
+  echo -e "\\n${MAGENTA}💡 РЕШЕНИЕ:${NC}"
+  echo -e "1. Установите **WSL 2** (Windows Subsystem for Linux)."
+  echo -e "   Команда в PowerShell (Admin): ${CYAN}wsl --install${NC}"
+  echo -e "2. Перезагрузите компьютер."
+  echo -e "3. Откройте терминал **Ubuntu** (или WSL) и перейдите в папку проекта."
+  echo -e "4. Запустите этот скрипт снова внутри WSL."
+  echo -e "\\n${YELLOW}Или используйте GitHub Codespaces (работает в браузере без установки).${NC}"
+  exit 1
+fi
+
+if [[ "$IS_WINDOWS_SUBSYSTEM" == true ]]; then
+  echo -e "${GREEN}✅ Отлично! Вы используете WSL. Это рекомендуемая среда для Windows.${NC}"
+  echo -e "${YELLOW}Примечание: Убедитесь, что Docker Desktop запущен и интегрирован с WSL.${NC}"
+  sleep 2
+fi
+
+# ==========================================
+# 1. ПРОВЕРКА DOCKER COMPOSE
+# ==========================================
 print_header "1️⃣  Статус контейнеров"
 
-# Проверяем, запущены ли вообще сервисы
-if ! docker compose ps --services | grep -q .; then
-  echo -e "${RED}️  Сервисы не найдены или docker compose не работает.${NC}"
-  echo -e "${YELLOW}💡 Решение: Выполните 'docker compose up -d --build'${NC}"
+if ! command -v docker &> /dev/null; then
+  echo -e "${RED}❌ Docker не найден в системе.${NC}"
+  echo -e "${YELLOW} Решение: Установите Docker Desktop и перезапустите терминал.${NC}"
+  exit 1
+fi
+
+if ! docker compose ps --services | grep -q . 2>/dev/null; then
+  echo -e "${RED}⚠️  Сервисы не найдены или docker compose не работает.${NC}"
+  echo -e "${YELLOW} Решение: Выполните 'docker compose up -d --build'${NC}"
   ERRORS_FOUND=1
 else
-  # Выводим таблицу статусов
   echo -e "${BLUE}Текущий статус сервисов:${NC}"
   docker compose ps --format "table {{.Name}}\t{{.Status}}" | sed 's/^/   /'
   
-  # Проверяем, есть ли хотя бы один работающий (Up)
   if docker compose ps | grep -q "Up"; then
-    echo -e "${GREEN}✅ Контейнеры запущены.${NC}"
+    echo -e "${GREEN}✅ Контейнеры запущены и работают.${NC}"
+    ERRORS_FOUND=0
   else
     echo -e "${RED}⚠️  Контейнеры существуют, но не работают (Exited/Restarting).${NC}"
     echo -e "${YELLOW}💡 Проверьте логи: docker compose logs${NC}"
@@ -88,10 +133,11 @@ else
   fi
 fi
 
-# --- 2. Application API ---
-print_header "2️  Проверка Fintech API (Port 5000)"
+# ==========================================
+# 2. ПРОВЕРКА API
+# ==========================================
+print_header "2️⃣  Проверка Fintech API (Port 5000)"
 
-# Используем отдельные вызовы вместо цикла с парсингом через ':', чтобы избежать ошибок с URL
 ENDPOINTS=(
   "http://localhost:5000/health:Health Check"
   "http://localhost:5000/api/failures:Failures API"
@@ -99,14 +145,6 @@ ENDPOINTS=(
 )
 
 for item in "${ENDPOINTS[@]}"; do
-  # Разделяем URL и описание вручную, так как в URL есть двоеточия
-  # Берем всё до последнего ":Description", но проще сделать так:
-  # Мы знаем формат: URL:Description. Описание всегда одно слово или несколько после последнего двоеточия? 
-  # Нет, надежнее использовать массив ассоциативный или просто вызвать функцию явно.
-  
-  # Простой хак: заменяем последний ':' на уникальный разделитель, потом делим
-  # Или просто вызываем проверку для каждого известного эндпоинта явно (надежнее):
-  
   case "$item" in
     *"health"*)
       wait_for_service "Health Check" "http://localhost:5000/health" || ERRORS_FOUND=1
@@ -120,63 +158,59 @@ for item in "${ENDPOINTS[@]}"; do
   esac
 done
 
-# Проверка наличия конкретной метрики
 echo -ne "${CYAN} Поиск метрики 'fintech_requests_total'...${NC} "
 if curl -s --max-time $TIMEOUT http://localhost:5000/metrics | grep -q "fintech_requests_total"; then
   echo -e "${GREEN}✅ Найдена${NC}"
 else
   echo -e "${RED}❌ Не найдена${NC}"
-  echo -e "${YELLOW}💡 Возможно, приложение еще не приняло ни одного запроса или ошибка в коде.${NC}"
+  echo -e "${YELLOW}💡 Возможно, приложение еще не приняло запросов.${NC}"
   ERRORS_FOUND=1
 fi
 
-# --- 3. Prometheus ---
+# ==========================================
+# 3. PROMETHEUS & GRAFANA
+# ==========================================
 print_header "3️⃣  Проверка Prometheus (Port 9090)"
-
 if ! wait_for_service "Prometheus Ready" "http://localhost:9090/-/ready"; then
-  echo -e "${YELLOW} Prometheus может загружать конфигурацию. Подождите 10-15 сек.${NC}"
+  echo -e "${YELLOW}⏳ Prometheus может загружаться. Подождите 15 сек и попробуйте снова.${NC}"
   ERRORS_FOUND=1
 fi
 
-# --- 4. Grafana ---
-print_header "4️⃣  Проверка Grafana (Port 3000)"
-
+print_header "4️  Проверка Grafana (Port 3000)"
 if ! wait_for_service "Grafana Health" "http://localhost:3000/api/health"; then
-  echo -e "${YELLOW}💡 Grafana может стартовать дольше других сервисов.${NC}"
+  echo -e "${YELLOW}⏳ Grafana может стартовать дольше других.${NC}"
   ERRORS_FOUND=1
 else
-  echo -e "${GREEN}📊 Доступна по адресу: http://localhost:3000 (admin/workshop)${NC}"
+  echo -e "${GREEN}📊 Доступна: http://localhost:3000 (admin/workshop)${NC}"
 fi
 
-# --- 5. cAdvisor (Опционально, но желательно) ---
 print_header "5️⃣  Проверка cAdvisor (Port 8080)"
 if ! wait_for_service "cAdvisor" "http://localhost:8080"; then
-  echo -e "${YELLOW}⚠️  cAdvisor недоступен. Графики ресурсов в Grafana могут быть пустыми.${NC}"
-  # Не считаем это фатальной ошибкой для старта, но предупреждаем
+  echo -e "${YELLOW}⚠️  cAdvisor недоступен. Графики ресурсов (CPU/RAM) могут быть пустыми.${NC}"
 else
   echo -e "${GREEN}✅ cAdvisor работает.${NC}"
 fi
 
 # ==========================================
-# ИТОГОВЫЙ ОТЧЕТ
+# ИТОГ
 # ==========================================
-print_header " ИТОГ ДИАГНОСТИКИ"
+print_header "🏁 ИТОГ ДИАГНОСТИКИ"
 
-if [ $ERRORS_FOUND -eq 0 ]; then
+if [ ${ERRORS_FOUND:-0} -eq 0 ]; then
   echo -e "${BOLD}${GREEN}🎉 ВСЁ ГОТОВО К ЭКСПЕРИМЕНТАМ!${NC}"
-  echo -e "${CYAN}Вы можете смело запускать кейсы:${NC}"
-  echo -e "   🚀 ${GREEN}bash scripts/01_run_latency.sh${NC}"
+  echo -e "${CYAN}Запускайте кейсы:${NC}"
+  echo -e "    ${GREEN}bash scripts/01_run_latency.sh${NC}"
   echo -e "   💥 ${GREEN}bash scripts/02_run_error_rate.sh${NC}"
   echo -e "    ${GREEN}bash scripts/03_run_db_slow.sh${NC}"
   echo -e "   💾 ${GREEN}bash scripts/04_run_memory_leak.sh${NC}"
   echo -e "   🌪️ ${GREEN}bash scripts/05_run_chaos_mix.sh${NC}"
-  echo -e "\\n${BLUE}Не забудьте открыть Grafana: http://localhost:3000${NC}"
+  echo -e "\\n${BLUE}Открывайте Grafana и наблюдайте за хаосом!${NC}"
   exit 0
 else
   echo -e "${BOLD}${RED}️  ОБНАРУЖЕНЫ ПРОБЛЕМЫ${NC}"
-  echo -e "${YELLOW}Система не полностью готова. Пожалуйста, проверьте логи:${NC}"
-  echo -e "    ${CYAN}docker compose logs app${NC}"
-  echo -e "   📝 ${CYAN}docker compose logs prometheus${NC}"
+  echo -e "${YELLOW}Проверьте логи:${NC}"
+  echo -e "   ${CYAN}docker compose logs app${NC}"
+  echo -e "   ${CYAN}docker compose logs prometheus${NC}"
   echo -e "\\n${BLUE}После исправления запустите проверку снова:${NC}"
   echo -e "   🔁 ${CYAN}bash scripts/check_setup.sh${NC}"
   exit 1

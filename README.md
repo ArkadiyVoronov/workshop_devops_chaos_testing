@@ -5,6 +5,7 @@
 ## Содержание
 
 - [Быстрый старт](#быстрый-старт)
+- [⚠️ Важное примечание по ОС](#важное-примечание-по-операционным-системам)
 - [Доступные сервисы](#доступные-сервисы)
 - [Структура воркшопа](#структура-воркшопа)
 - [Практические кейсы](#практические-кейсы)
@@ -17,19 +18,20 @@
 
 ## ⚡ Быстрый старт
 
-### 🚀 Способ 1: GitHub Codespaces (самый быстрый, 3 минуты)
-Не нужно ничего устанавливать — всё работает в браузере:
-1. Откройте репозиторий на GitHub
-2. Нажмите **Code → Codespaces → Create codespace on main**
-3. Дождитесь загрузки (первый раз ≈ 2 минуты)
+### 🚀 Способ 1: GitHub Codespaces (Рекомендуемый ✅)
+**Самый надежный способ.** Не нужно ничего устанавливать — всё работает в браузере на Linux-сервере. Идеально для Windows и Mac.
+1. Откройте репозиторий на GitHub.
+2. Нажмите **Code → Codespaces → Create codespace on main**.
+3. Дождитесь загрузки (первый раз ≈ 2 минуты).
 4. В терминале выполните:
    ```bash
    docker compose up -d --build
    bash scripts/check_setup.sh
    ```
-5. Откройте ссылки на Grafana (3000) и Prometheus (9090)
+5. Откройте ссылки на Grafana (порт 3000) и Prometheus (порт 9090) через всплывающее окно портов.
 
-### 📦 Способ 2: Локально с Docker
+### 📦 Способ 2: Локально с Docker (Linux / macOS / WSL)
+Если вы хотите запускать проект на своем компьютере:
 ```bash
 git clone <repo>
 cd workshop_devops_with_app
@@ -37,8 +39,22 @@ docker compose up -d --build
 bash scripts/check_setup.sh
 ```
 
-### 🎯 Способ 3: Replit (встроенная БД, без Docker)
-Нажмите на кнопку **"Run"** в Replit — приложение запустится сразу на порту 5000.
+### 🎯 Способ 3: Replit (Альтернатива без Docker)
+Нажмите на кнопку **"Run"** в Replit — приложение запустится сразу на порту 5000 (без полной инфраструктуры мониторинга).
+
+---
+
+## ⚠️ Важное примечание по операционным системам
+
+Поскольку воркшоп использует **Bash-скрипты** и **Docker Compose**, опыт запуска зависит от вашей ОС:
+
+| ОС | Статус | Рекомендации |
+| :-- | :-- | :-- |
+| **🐧 Linux** | ✅ **Нативно** | Работает из коробки. Рекомендуется использовать Ubuntu/Debian. |
+| **🍎 macOS** | ️ **Не тестировалось** | Должно работать через Docker Desktop, но возможны нюансы с правами доступа к сокету Docker или путями монтирования. Если возникнут ошибки — используйте **GitHub Codespaces**. |
+| ** Windows** | ️ **Только через WSL 2** | **Прямой запуск в PowerShell/CMD невозможен!** Скрипты выдадут ошибки вида `bash: command not found` или проблемы с переносом строк (`\r`).<br><br>**Как запустить правильно:**<br>1. Установите [WSL 2](https://learn.microsoft.com/ru-ru/windows/wsl/install) (команда `wsl --install` в PowerShell).<br>2. Установите Docker Desktop и включите интеграцию с WSL.<br>3. Откройте терминал **Ubuntu** (или другую дистрибутив WSL), а не PowerShell.<br>4. Перейдите в папку проекта внутри Linux: `cd /mnt/c/Users/...`<br>5. Запускайте команды как в Linux. |
+
+> 💡 **Совет для участников с Windows:** Чтобы сэкономить время и избежать проблем с настройкой окружения, настоятельно рекомендуется использовать **GitHub Codespaces** (Способ 1). Это гарантирует 100% работоспособность за 3 минуты.
 
 ---
 
@@ -82,7 +98,7 @@ bash scripts/reset.sh
 > Восстановление производится вручную через `/api/reset` для целей обучения.
 
 
-## 📖 Информация
+##  Информация
 
 - **Архитектура**: `docs/architecture.md`  
 - **Практические кейсы**: `docs/cases/`
@@ -122,18 +138,18 @@ workshop_devops_with_app/
 ├── config/
 │   ├── prometheus.yml           # Конфигурация сборки метрик
 │   ├── prometheus.rules.yml     # Правила алертов
-│   └── grafana/                 # Provisioning datasources и дашбордов
+│   ── grafana/                 # Provisioning datasources и дашбордов
 ├── scripts/
 │   ├── check_setup.sh           # Проверка готовности всех сервисов
-│   ├── run_latency.sh           # Кейс 1: инъекция latency
-│   ├── run_error_rate.sh        # Кейс 2: инъекция error rate
-│   ├── run_db_slow.sh           # Кейс 3: инъекция медленной БД
-│   ├── run_memory_leak.sh       # Кейс 4: инъекция memory leak
-│   ├── run_chaos_mix.sh         # Кейс 5: комбинированный отказ
+│   ├── 01_run_latency.sh        # Кейс 1: инъекция latency
+│   ├── 02_run_error_rate.sh     # Кейс 2: инъекция error rate
+│   ├── 03_run_db_slow.sh        # Кейс 3: инъекция медленной БД
+│   ├── 04_run_memory_leak.sh    # Кейс 4: инъекция memory leak
+│   ├── 05_run_chaos_mix.sh      # Кейс 5: комбинированный отказ
 │   └── reset.sh                 # Сброс всех инъекций
 ├── app.py                       # Flask API с инъекцией отказов
 ├── docker-compose.yml           # Конфигурация инфраструктуры
-├── init.sql                     # Инициализация PostgreSQL
+── init.sql                     # Инициализация PostgreSQL
 ├── .env.example                 # Пример переменных окружения
 └── README.md                    # Этот файл
 ```
@@ -155,17 +171,17 @@ workshop_devops_with_app/
 
 ---
 
-## 📚 Практические кейсы
+##  Практические кейсы
 
 Пять готовых сценариев отказов с автоматическими скриптами. Каждый кейс демонстрирует реальный класс проблем в production.
 
 | № | Кейс | Команда | Метрики для отслеживания |
 | :-- | :-- | :-- | :-- |
-| 1️⃣ | **Рост latency** | `bash scripts/01_run_latency.sh` | `p95/p99`, `RPS`, `active_transactions` |
-| 2️⃣ | **Рост error rate** | `bash scripts/02_run_error_rate.sh` | `error_rate`, `status_5xx` |
-| 3️⃣ | **Медленная БД** | `bash scripts/03_run_db_slow.sh` | `db_latency`, `active_transactions` (рост) |
-| 4️⃣ | **Утечка памяти** | `bash scripts/04_run_memory_leak.sh` | `memory_usage`, `container_restarts` |
-| 5️⃣ | **Хаос-микс** | `bash scripts/05_run_chaos_mix.sh` | Все сигналы сразу (реальный инцидент) |
+| 1️ | **Рост latency** | `bash scripts/01_run_latency.sh` | `p95/p99`, `RPS`, `active_transactions` |
+| 2️ | **Рост error rate** | `bash scripts/02_run_error_rate.sh` | `error_rate`, `status_5xx` |
+| 3️ | **Медленная БД** | `bash scripts/03_run_db_slow.sh` | `db_latency`, `active_transactions` (рост) |
+| 4️ | **Утечка памяти** | `bash scripts/04_run_memory_leak.sh` | `memory_usage`, `container_restarts` |
+| 5️ | **Хаос-микс** | `bash scripts/05_run_chaos_mix.sh` | Все сигналы сразу (реальный инцидент) |
 
 **Для каждого кейса:**
 1. Запустить скрипт → система начнёт "падать"
@@ -209,14 +225,13 @@ bash scripts/check_setup.sh
 
 ---
 
-## 📚 Дополнительная документация
+## Дополнительная документация
 
 - [Архитектура и методология](docs/architecture.md)
 - [Описание воркшопа для презентации](docs/presentation.md)
 - [Подробный гайд для тренера](docs/coach-guide.md)
 - [Настройка мониторинга (Prometheus/Grafana)](docs/monitoring.md)
 - [Скриншоты и примеры](docs/screenshots.md)
-- [Философия тестирования и chaos engineering]()
 - [Руководство по curl](docs/curl_guide.md)
 - [Описание скриптов](docs/scripts.md)
 
@@ -254,4 +269,3 @@ curl -s http://localhost:3000/api/datasources | jq '.[] | {name, url}'
 ## Лицензия
 
 MIT
-=======
