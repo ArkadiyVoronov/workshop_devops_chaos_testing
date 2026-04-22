@@ -58,7 +58,7 @@ bash scripts/check_setup.sh
 
 ---
 
-## 🎬 Запуск первого кейса (5 минут)
+## 🎬 Запуск первого кейса
 
 ### Базовая проверка
 ```bash
@@ -76,7 +76,7 @@ curl http://localhost:5000/health
 # Способ 1: через скрипт
 bash scripts/01_run_latency.sh
 
-# Способ 2: прямой curl (если нужна кастомизация)
+# Способ 2: прямой curl
 curl -X POST http://localhost:5000/api/failures \
   -H "Content-Type: application/json" \
   -d '{"latency_ms": 3000}'
