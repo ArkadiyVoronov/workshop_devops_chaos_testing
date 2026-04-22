@@ -58,7 +58,7 @@ curl http://localhost:5000/health
 ### Инъекция отказа (пример: latency)
 ```bash
 # Способ 1: через скрипт
-bash scripts/run_latency.sh
+bash scripts/01_run_latency.sh
 
 # Способ 2: прямой curl (если нужна кастомизация)
 curl -X POST http://localhost:5000/api/failures \
@@ -161,11 +161,11 @@ workshop_devops_with_app/
 
 | № | Кейс | Команда | Метрики для отслеживания |
 | :-- | :-- | :-- | :-- |
-| 1️⃣ | **Рост latency** | `bash scripts/run_latency.sh` | `p95/p99`, `RPS`, `active_transactions` |
-| 2️⃣ | **Рост error rate** | `bash scripts/run_error_rate.sh` | `error_rate`, `status_5xx` |
-| 3️⃣ | **Медленная БД** | `bash scripts/run_db_slow.sh` | `db_latency`, `active_transactions` (рост) |
-| 4️⃣ | **Утечка памяти** | `bash scripts/run_memory_leak.sh` | `memory_usage`, `container_restarts` |
-| 5️⃣ | **Хаос-микс** | `bash scripts/run_chaos_mix.sh` | Все сигналы сразу (реальный инцидент) |
+| 1️⃣ | **Рост latency** | `bash scripts/01_run_latency.sh` | `p95/p99`, `RPS`, `active_transactions` |
+| 2️⃣ | **Рост error rate** | `bash scripts/02_run_error_rate.sh` | `error_rate`, `status_5xx` |
+| 3️⃣ | **Медленная БД** | `bash scripts/03_run_db_slow.sh` | `db_latency`, `active_transactions` (рост) |
+| 4️⃣ | **Утечка памяти** | `bash scripts/04_run_memory_leak.sh` | `memory_usage`, `container_restarts` |
+| 5️⃣ | **Хаос-микс** | `bash scripts/05_run_chaos_mix.sh` | Все сигналы сразу (реальный инцидент) |
 
 **Для каждого кейса:**
 1. Запустить скрипт → система начнёт "падать"
@@ -194,11 +194,11 @@ docker compose restart prometheus
 Все кейсы доступны через скрипты в папке `scripts/`:
 ```bash
 # Запуск любого кейса (выберите один)
-bash scripts/run_latency.sh          # Кейс 1: Latency
-bash scripts/run_error_rate.sh       # Кейс 2: Error Rate
-bash scripts/run_db_slow.sh          # Кейс 3: DB Slow
-bash scripts/run_memory_leak.sh      # Кейс 4: Memory Leak
-bash scripts/run_chaos_mix.sh        # Кейс 5: Chaos Mix
+bash scripts/01_run_latency.sh          # Кейс 1: Latency
+bash scripts/02_run_error_rate.sh       # Кейс 2: Error Rate
+bash scripts/03_run_db_slow.sh          # Кейс 3: DB Slow
+bash scripts/04_run_memory_leak.sh      # Кейс 4: Memory Leak
+bash scripts/05_run_chaos_mix.sh        # Кейс 5: Chaos Mix
 
 # Сброс состояния после любого кейса
 bash scripts/reset.sh
