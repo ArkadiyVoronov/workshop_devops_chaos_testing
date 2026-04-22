@@ -1,19 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Настройки
+# ==========================================
+# НАСТРОЙКИ СЦЕНАРИЯ "DB SLOW"
+# ==========================================
+# Количество стадий теста
 STAGES=5
-STAGE_DURATION=8  # Чуть дольше, так как запросы будут медленнее
-TRAFFIC_RATE=0.3  # Реже, чтобы не перегружать медленную БД сразу
+# Длительность каждой стадии в секундах (чуть дольше, так как запросы медленные)
+STAGE_DURATION=10
+# Интервал между запросами (сек)
+TRAFFIC_INTERVAL=0.3
+# URL эндпоинта, нагружающего БД
+API_URL="http://localhost:5000/api/balance"
 
-# Цвета
+# ==========================================
+# ЦВЕТА И ФОРМАТИРОВАНИЕ
+# ==========================================
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+BOLD='\033[1m'
 
-# Функция прогресса
+# ==========================================
+# ФУНКЦИИ
+# ==========================================
+
+# Функция вывода прогресса с баром
 show_progress() {
   local stage=$1
   local duration=$2
@@ -21,42 +36,54 @@ show_progress() {
   local requests=0
   local errors=0
 
-  echo -e "${BLUE}Генерация транзакций (нагрузка на БД)...${NC}"
+  echo -e "${CYAN}🚀 Генерация транзакций (нагрузка на БД)...${NC}"
+  
   while true; do
     local current_time=$(date +%s)
     local elapsed=$((current_time - start_time))
-    local percent=$((elapsed * 100 / duration))
-    local time_left=$((duration - elapsed))
     
+    # Проверка окончания стадии
+    if [ $elapsed -ge $duration ]; then
+      break
+    fi
+
     # Делаем запрос к балансу (он использует БД)
-    local http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/api/balance)
+    local http_code=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL")
     
-    if [ "$http_code" = "200" ]; then
+    if [[ "$http_code" =~ ^2 ]]; then
       requests=$((requests + 1))
     else
       errors=$((errors + 1))
     fi
 
-    printf "\\r${YELLOW}Стадия %d: %d%% (%d/%ds) | Успешно: %d | Ошибки: %d | Время: %02d:%02d${NC} " \
-      $stage $percent $elapsed $duration $requests $errors $((elapsed / 60)) $((elapsed % 60))
+    # Расчет процентов и прогресс-бара
+    local percent=$((elapsed * 100 / duration))
+    local bar_len=$((percent / 5))
+    local bar=$(printf "%0.s#" $(seq 1 $bar_len 2>/dev/null || true))
+    local space=$(printf "%0.s." $(seq 1 $((20 - bar_len)) 2>/dev/null || true))
     
-    if [ $elapsed -ge $duration ]; then
-      break
-    fi
-    sleep $TRAFFIC_RATE
+    # Вывод в одну строку (обновляемая)
+    printf "\r${YELLOW}[%s%s] %d%% | Запросов: %d | ✅ Успех: %d | ❌ Ошибки: %d | Время: %02d:%02d${NC} " \
+      "$bar" "$space" $percent $requests $((requests - errors)) $errors $((elapsed / 60)) $((elapsed % 60))
+    
+    sleep $TRAFFIC_INTERVAL
   done
-  echo -e "\\n${GREEN}Стадия $stage завершена: $requests запросов, ошибок: $errors${NC}"
+  
+  echo -e "\\n${GREEN}✅ Стадия $stage завершена: выполнено $requests запросов.${NC}"
+  if [ $errors -gt 0 ]; then
+     echo -e "${RED}⚠️ Ошибок на стадии: $errors${NC}"
+  fi
 }
 
 # Функция инъекции
 inject_db_slow() {
   local is_slow=$1
-  local mode_text="ВКЛ"
+  local mode_text="ВКЛ (тормозим БД)"
   if [ "$is_slow" = "false" ]; then
-    mode_text="ВЫКЛ"
+    mode_text="ВЫКЛ (норма)"
   fi
   
-  echo -e "${RED}Режим DB Slow: $mode_text${NC}"
+  echo -e "${RED}️ Режим DB Slow: ${mode_text}${NC}"
   
   local payload="{\"db_slow\": $is_slow}"
   local response=$(curl -s -w "HTTP %{http_code}" -X POST http://localhost:5000/api/failures \
@@ -67,48 +94,71 @@ inject_db_slow() {
   if [ "$http_code" = "200" ]; then
     echo -e "${GREEN}✓ Конфигурация применена${NC}"
   else
-    echo -e "${RED} Ошибка API: $http_code${NC}"
+    echo -e "${RED}✗ Ошибка API: $http_code${NC}"
     exit 1
   fi
 }
 
-# Сброс состояния
-echo -e "\\n${YELLOW}🧹 Сброс предыдущих состояний...${NC}"
-response=$(curl -s -w "HTTP %{http_code}" -X POST http://localhost:5000/api/reset)
-http_code=${response: -3}
-if [ "$http_code" = "200" ]; then
-  echo -e "${GREEN}✓ Система очищена${NC}"
-else
-  echo -e "${RED}✗ Ошибка сброса: $http_code${NC}"
-fi
+# Функция сброса
+reset_state() {
+  echo -e "\\n${YELLOW} Сброс состояния системы...${NC}"
+  local response=$(curl -s -w "HTTP %{http_code}" -X POST http://localhost:5000/api/reset)
+  local http_code=${response: -3}
+  
+  if [ "$http_code" = "200" ]; then
+    echo -e "${GREEN}✓ Система очищена, БД работает нормально${NC}"
+  else
+    echo -e "${RED} Ошибка сброса: $http_code${NC}"
+  fi
+}
 
-# Основной цикл
-echo -e "\\n${BLUE}=== ТЕСТ МЕДЛЕННОЙ БД (5 стадий) ===${NC}"
-echo "Смотри Grafana: fintech_active_transactions, Latency."
-echo "Цель: увидеть рост очереди транзакций при включенном db_slow."
-echo -e "${YELLOW}Нажми Ctrl+C для досрочной остановки.${NC}\\n"
+# ==========================================
+# ОСНОВНОЙ СЦЕНАРИЙ
+# ==========================================
+
+echo -e "\\n${BOLD}🐢 ТЕСТ МЕДЛЕННОЙ БД (DB SLOW / QUEUE BUILDUP)${NC}"
+echo -e "${CYAN}Цель: Показать, как задержки в БД создают очередь активных транзакций.${NC}"
+echo -e "${YELLOW}Смотри в Grafana: панель 'Active Transactions' и 'Latency'.${NC}"
+echo -e "${RED}Внимание: Запросы будут выполняться медленнее обычного.${NC}\\n"
+
+# 1. Сброс перед началом
+reset_state
+sleep 2
+
+# 2. Цикл по стадиям
+echo -e "${BLUE}=== ЗАПУСК ЭСКАЛАЦИИ НАГРУЗКИ НА БД ===${NC}"
 
 for ((stage=1; stage<=STAGES; stage++)); do
-  echo -e "\\n${YELLOW}=== Стадия $stage/$STAGES: Включаем тормоза БД ($STAGE_DURATION сек) ===${NC}"
+  echo -e "\\n${BOLD}--- Стадия $stage/$STAGES ---${NC}"
+  echo -e "${CYAN}Действие: Включаем искусственную задержку БД (2 сек на запрос)${NC}"
   
   # Включаем медленную БД
   inject_db_slow "true"
-  sleep 1
+  
+  sleep 1 # Пауза перед стартом трафика
   
   # Генерируем нагрузку
   show_progress $stage $STAGE_DURATION
   
-  echo -e "\\n${GREEN}✅ Стадия $stage: Проверь рост Active Transactions в Grafana.${NC}"
+  echo -e "${GREEN}📈 Очередь транзакций должна расти. Проверь график!${NC}"
   
-  # Небольшая пауза перед следующей стадией (можно убрать, если хотим резкий переход)
+  # Небольшая пауза перед следующей стадией
   sleep 2
 done
 
-echo -e "\\n${GREEN}🎉 Тест завершен! Очередь должна была расти.${NC}"
-echo -e "${YELLOW}❗ Важно: Сбрасываем состояние, иначе БД останется медленной.${NC}"
-echo "Выполни: bash scripts/reset.sh"
+# 3. Финал
+echo -e "\\n${BOLD} ТЕСТ ЗАВЕРШЕН!${NC}"
+echo -e "${YELLOW}График Active Transactions должен был показать устойчивый рост во время стадий.${NC}"
+echo -e "${CYAN}Это демонстрирует риск таймаутов и исчерпания пула соединений при медленной БД.${NC}"
 
-# Автоматический сброс в конце (опционально, можно закомментировать)
-echo -e "\\n${BLUE}Автоматический сброс через 3 секунды...${NC}"
-sleep 3
-bash scripts/reset.sh
+# Интерактивный выбор
+echo ""
+read -p "Сбросить состояние системы сейчас? (y/n): " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  reset_state
+else
+  echo -e "${YELLOW}️ Система осталась в режиме медленной БД. Не забудь выполнить 'bash scripts/reset.sh' позже!${NC}"
+fi
+
+echo -e "\\n${GREEN}Готово. Удачного анализа узких мест! ${NC}"
