@@ -18,24 +18,134 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+<<<<<<< HEAD
 
   db:
     image: postgres:15-alpine
+=======
+    # Strict resource limits to protect host
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    memswap_limit: 256M
+
+  db:
+    image: public.ecr.aws/bitnami/postgresql:15.4.0
+>>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-appuser}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-apppass}
       - POSTGRES_DB=${POSTGRES_DB:-appdb}
+<<<<<<< HEAD
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+=======
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+>>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-appuser} -d ${POSTGRES_DB:-appdb}"]
       interval: 5s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+<<<<<<< HEAD
 
+=======
+    # Strict resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    memswap_limit: 256M
+
+  prometheus:
+    image: quay.io/prometheus/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus.rules.yml:/etc/prometheus/prometheus.rules.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    # Strict resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    memswap_limit: 128M
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-workshop}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    # Strict resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    memswap_limit: 128M
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    restart: unless-stopped
+    # Strict resource limits (cadvisor needs less)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 64M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    memswap_limit: 64M
+>>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
 
 networks:
   default:
@@ -43,3 +153,8 @@ networks:
 
 volumes:
   postgres_data:
+<<<<<<< HEAD
+=======
+  prometheus_data:
+  grafana_data:
+>>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed

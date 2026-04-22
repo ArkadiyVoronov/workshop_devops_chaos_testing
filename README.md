@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Fintech DevOps Workshop
 
 > Интерактивный воркшоп по тестированию отказоустойчивости финтех-приложений с использованием Docker, Prometheus и Grafana.
@@ -254,3 +255,6 @@ curl -s http://localhost:3000/api/datasources | jq '.[] | {name, url}'
 ## Лицензия
 
 MIT
+=======
+"# Clean Workshop ReponnMinimal chaos testing setup."
+>>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
