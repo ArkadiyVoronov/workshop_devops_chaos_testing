@@ -8,20 +8,61 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Build and start
+      - name: Build and start services
         env:
           DOCKER_BUILDKIT: 1
         run: docker compose up -d --build
         
-      - name: Wait
-        run: sleep 45
-        
-      - name: Health checks
+      - name: Run Health Checks with Retries
         run: |
-          curl -f http://localhost:5000/health
-          curl -f http://localhost:9090/-/healthy
-          curl -f http://localhost:3000/api/health -u admin:workshop
-          curl -s http://localhost:5000/metrics | grep -q fintech_requests_total
+          echo "🟢 Checking App Service (Port 5000)..."
+          if ! curl -f http://localhost:5000/health; then
+            echo "❌ App service is not healthy."
+            exit 1
+          fi
+          
+          echo "🟢 Checking Prometheus Service (Port 9090)..."
+          if ! curl -f http://localhost:9090/-/healthy; then
+            echo "❌ Prometheus service is not healthy."
+            exit 1
+          fi
+          
+          echo " Waiting for Grafana Service (Port 3000) with retries..."
+          # Grafana часто требует больше времени на инициализацию. 
+          # Делаем до 12 попыток с интервалом в 5 секунд (всего ~60 сек).
+          MAX_RETRIES=12
+          RETRY_INTERVAL=5
+          COUNTER=0
+          GRAFANA_URL="http://localhost:3000/api/health"
+          GRAFANA_AUTH="-u admin:workshop"
+          
+          while [ $COUNTER -lt $MAX_RETRIES ]; do
+            # Пытаемся получить ответ. Если код 200 - выходим из цикла успешно.
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $GRAFANA_URL $GRAFANA_AUTH)
+            
+            if [ "$HTTP_CODE" == "200" ]; then
+              echo "✅ Grafana is ready! (HTTP $HTTP_CODE)"
+              break
+            fi
+            
+            COUNTER=$((COUNTER + 1))
+            echo " Grafana not ready yet (Attempt $COUNTER/$MAX_RETRIES, HTTP Code: $HTTP_CODE). Waiting ${RETRY_INTERVAL}s..."
+            sleep $RETRY_INTERVAL
+          done
+          
+          if [ $COUNTER -eq $MAX_RETRIES ]; then
+            echo "❌ Grafana failed to start within timeout."
+            docker compose logs grafana
+            exit 1
+          fi
+
+          echo "🔍 Checking Metrics endpoint..."
+          if ! curl -s http://localhost:5000/metrics | grep -q fintech_requests_total; then
+            echo "❌ Metrics endpoint check failed."
+            exit 1
+          fi
+          
+          echo "🎉 All health checks passed successfully!"
           
       - name: Cleanup
         if: always()
