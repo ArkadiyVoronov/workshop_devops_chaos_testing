@@ -7,10 +7,8 @@ from datetime import datetime
 from flask import Flask, jsonify, request
 import psycopg2
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
-<<<<<<< HEAD
-=======
 from contextlib import contextmanager
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
+
 
 app = Flask(__name__)
 
@@ -28,11 +26,9 @@ _failure_state = {
     'db_fail': False,
 }
 _leaked_memory = []
-<<<<<<< HEAD
-=======
+
 _db_lock = threading.Lock()  # Блокировка для симуляции очереди в БД
 _memory_leak_active = False  # Флаг активной утечки
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
 
 def inject_failures():
     """Инъекция отказов на основе состояния"""
@@ -46,7 +42,6 @@ def inject_failures():
     if state['error_rate'] > 0 and random.randint(1, 100) <= state['error_rate']:
         raise Exception("Simulated random failure")
     
-<<<<<<< HEAD
     # Утечка памяти
     if state['memory_leak_mb'] > 0:
         _leaked_memory.append(bytearray(state['memory_leak_mb'] * 1024 * 1024))
@@ -54,7 +49,7 @@ def inject_failures():
     # Медленная БД
     if state['db_slow']:
         time.sleep(2)
-=======
+
     # Утечка памяти - выделяем память и НЕ освобождаем
     if state['memory_leak_mb'] > 0:
         global _memory_leak_active
@@ -75,7 +70,6 @@ def db_transaction():
         yield
     finally:
         ACTIVE_TRANSACTIONS.dec()
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
 
 # === ROUTES ===
 
@@ -125,7 +119,6 @@ def metrics():
 @app.route('/api/balance')
 def get_balance():
     start = time.time()
-<<<<<<< HEAD
     try:
         inject_failures()
         
@@ -147,42 +140,10 @@ def get_balance():
     except Exception as e:
         REQUEST_COUNT.labels(method='GET', endpoint='/api/balance', status='500').inc()
         return jsonify({"error": str(e)}), 500
-=======
-    
-    with db_transaction():
-        try:
-            # Инъекция задержки БД (с блокировкой для создания очереди)
-            if _failure_state['db_slow']:
-                with _db_lock:
-                    time.sleep(3)  # Медленная БД - держим锁 3 секунды
-            
-            # Инъекция отказов (включая memory leak)
-            inject_failures()
-            
-            conn = psycopg2.connect(os.getenv('DATABASE_URL'))
-            cur = conn.cursor()
-            cur.execute("SELECT account_number, balance FROM accounts WHERE user_id = 1")
-            result = cur.fetchone()
-            cur.close()
-            conn.close()
-            
-            REQUEST_LATENCY.labels(endpoint='/api/balance').observe(time.time() - start)
-            REQUEST_COUNT.labels(method='GET', endpoint='/api/balance', status='200').inc()
-            
-            return jsonify({
-                "account": result[0] if result else "ACC-001",
-                "balance": float(result[1]) if result else 1000.00,
-                "currency": "USD"
-            })
-        except Exception as e:
-            REQUEST_COUNT.labels(method='GET', endpoint='/api/balance', status='500').inc()
-            return jsonify({"error": str(e)}), 500
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
 
 @app.route('/api/transfer', methods=['POST'])
 def transfer():
     start = time.time()
-<<<<<<< HEAD
     ACTIVE_TRANSACTIONS.inc()
     
     try:
@@ -210,33 +171,6 @@ def transfer():
         return jsonify({"error": "Transfer failed", "details": str(e)}), 500
     finally:
         ACTIVE_TRANSACTIONS.dec()
-=======
-    
-    with db_transaction():
-        try:
-            inject_failures()
-            
-            data = request.get_json() or {}
-            amount = data.get('amount', 0)
-            to_account = data.get('to_account', 'unknown')
-            
-            # Симуляция обработки перевода
-            time.sleep(0.1)
-            
-            REQUEST_LATENCY.labels(endpoint='/api/transfer').observe(time.time() - start)
-            REQUEST_COUNT.labels(method='POST', endpoint='/api/transfer', status='200').inc()
-            
-            return jsonify({
-                "status": "completed",
-                "transaction_id": f"TXN-{random.randint(100000, 999999)}",
-                "amount": amount,
-                "to_account": to_account,
-                "timestamp": datetime.utcnow().isoformat()
-            })
-        except Exception as e:
-            REQUEST_COUNT.labels(method='POST', endpoint='/api/transfer', status='500').inc()
-            return jsonify({"error": "Transfer failed", "details": str(e)}), 500
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
 
 @app.route('/api/failures', methods=['GET', 'POST'])
 def manage_failures():
@@ -259,24 +193,11 @@ def manage_failures():
 @app.route('/api/reset', methods=['POST'])
 def reset():
     """Сброс всех отказов и очистка памяти"""
-<<<<<<< HEAD
     global _failure_state, _leaked_memory
     _failure_state = {k: (False if isinstance(v, bool) else 0) for k, v in _failure_state.items()}
     _leaked_memory = []
-=======
-    global _failure_state, _leaked_memory, _memory_leak_active
-    _failure_state = {k: (False if isinstance(v, bool) else 0) for k, v in _failure_state.items()}
-    _leaked_memory = []
-    _memory_leak_active = False
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
     gc.collect()
     return jsonify({"status": "reset complete"})
 
 if __name__ == '__main__':
-<<<<<<< HEAD
     app.run(host='0.0.0.0', port=5000)
-=======
-    # threaded=True позволяет обрабатывать запросы параллельно
-    # Это нужно для корректного отображения fintech_active_transactions
-    app.run(host='0.0.0.0', port=5000, threaded=True)
->>>>>>> ef52d2375bbdea727f2f4ea0b5a483547b753eed
