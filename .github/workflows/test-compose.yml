@@ -24,7 +24,7 @@ jobs:
             local interval=4
             local counter=0
             
-            echo "⏳ Waiting for $name ($url)..."
+            echo " Waiting for $name ($url)..."
             
             while [ $counter -lt $max_retries ]; do
               # Выполняем curl и получаем только код ответа
@@ -47,23 +47,31 @@ jobs:
             
             echo "❌ $name failed to start after $((max_retries * interval)) seconds."
             echo "--- Logs for $name ---"
-            # Пытаемся вывести логи конкретного сервиса для отладки
-            docker compose logs "$name" || echo "Could not fetch logs for $name"
+            # ИСПРАВЛЕНИЕ: используем имя точно так же, как в docker-compose.yml (строчные буквы)
+            # Для grafana это 'grafana', а не 'Grafana'
+            local compose_name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+            
+            if docker compose ps | grep -q "$compose_name"; then
+              docker compose logs "$compose_name"
+            else
+              echo "Container '$compose_name' not found or exited immediately. Checking all logs:"
+              docker compose logs
+            fi
             return 1
           }
 
           # 1. Проверка App Service
-          if ! wait_for_service "App Service" "http://localhost:5000/health"; then
+          if ! wait_for_service "app" "http://localhost:5000/health"; then
             exit 1
           fi
 
           # 2. Проверка Prometheus
-          if ! wait_for_service "Prometheus" "http://localhost:9090/-/healthy"; then
+          if ! wait_for_service "prometheus" "http://localhost:9090/-/healthy"; then
             exit 1
           fi
 
-          # 3. Проверка Grafana (с авторизацией)
-          if ! wait_for_service "Grafana" "http://localhost:3000/api/health" "-u admin:workshop"; then
+          # 3. Проверка Grafana (с авторизацией) - Имя изменено на строчное 'grafana'
+          if ! wait_for_service "grafana" "http://localhost:3000/api/health" "-u admin:workshop"; then
             exit 1
           fi
           
