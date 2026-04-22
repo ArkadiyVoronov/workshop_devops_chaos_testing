@@ -5,11 +5,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    # Явное имя контейнера для корректной работы метрик cAdvisor в Grafana
+    container_name: fintech-app
     ports:
       - "5000:5000"
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-appuser}:${POSTGRES_PASSWORD:-apppass}@db:5432/${POSTGRES_DB:-appdb}
       - PORT=5000
+      - FAILURE_MODE=none
+      - BACKEND_LATENCY_MS=0
+      - DB_POOL_SIZE=10
+      - MEMORY_LEAK_MB_PER_REQUEST=0
     depends_on:
       db:
         condition: service_healthy
@@ -20,7 +26,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    # Опционально: лимиты для приложения, если нужно
     deploy:
       resources:
         limits:
@@ -29,20 +34,19 @@ services:
         reservations:
           cpus: '0.2'
           memory: 128M
-    memswap_limit: 512M
 
   db:
-    # Используем официальный образ Bitnami или postgres, здесь оставил Bitnami как во втором блоке
     image: public.ecr.aws/bitnami/postgresql:15.4.0
+    # Явное имя контейнера
+    container_name: fintech-db
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-appuser}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-apppass}
       - POSTGRES_DB=${POSTGRES_DB:-appdb}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      # Убедимся, что команда работает. Если переменные не подставятся в healthcheck в старых версиях, 
-      # можно заменить на жесткие значения или использовать скрипт.
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-appuser} -d ${POSTGRES_DB:-appdb}"]
       interval: 5s
       timeout: 5s
@@ -57,10 +61,11 @@ services:
         reservations:
           cpus: '0.1'
           memory: 64M
-    memswap_limit: 256M
 
   prometheus:
     image: quay.io/prometheus/prometheus:latest
+    # Явное имя контейнера
+    container_name: fintech-prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -79,14 +84,15 @@ services:
       resources:
         limits:
           cpus: '0.3'
-          memory: 128M
+          memory: 256M
         reservations:
           cpus: '0.05'
-          memory: 32M
-    memswap_limit: 128M
+          memory: 64M
 
   grafana:
     image: grafana/grafana:latest
+    # Явное имя контейнера
+    container_name: fintech-grafana
     ports:
       - "3000:3000"
     environment:
@@ -104,14 +110,15 @@ services:
       resources:
         limits:
           cpus: '0.3'
-          memory: 128M
+          memory: 256M
         reservations:
           cpus: '0.05'
-          memory: 32M
-    memswap_limit: 128M
+          memory: 64M
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
+    # Явное имя контейнера
+    container_name: fintech-cadvisor
     ports:
       - "8080:8080"
     volumes:
@@ -126,11 +133,10 @@ services:
       resources:
         limits:
           cpus: '0.2'
-          memory: 64M
+          memory: 128M
         reservations:
           cpus: '0.05'
           memory: 32M
-    memswap_limit: 64M
 
 networks:
   default:
