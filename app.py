@@ -120,13 +120,12 @@ def metrics():
 def get_balance():
     start = time.time()
     
-    # === КРИТИЧЕСКАЯ ПРАВКА ===
-    # Эта обертка увеличивает счетчик ACTIVE_TRANSACTIONS в момент входа
-    # и уменьшает его в момент выхода (даже при ошибке).
-    # Именно это создает "очередь", когда скрипт включает db_slow (sleep 2s).
+    # === КРИТИЧЕСКАЯ ПРАВКА ДЛЯ КЕЙСА 3 ===
+    # Этот блок увеличивает счетчик ACTIVE_TRANSACTIONS при входе 
+    # и уменьшает при выходе. Без этого график будет лежать на 0.
     with db_transaction():
         try:
-            inject_failures()  # Здесь срабатывает искусственная задержка (2 сек)
+            inject_failures()  # Здесь срабатывает задержка db_slow (2 сек)
             
             conn = psycopg2.connect(os.getenv('DATABASE_URL'))
             cur = conn.cursor()

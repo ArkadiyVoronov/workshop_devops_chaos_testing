@@ -24,11 +24,14 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    # ИЗМЕНЕНИЕ: Запуск через Gunicorn с 10 воркерами для параллельной обработки запросов
+    # Это необходимо, чтобы метрика Active Transactions могла расти (кейс 3)
+    command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "10", "--threads", "2", "app:app"]
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 512M
+          cpus: '1.5'  # Увеличили лимит CPU, так как 10 воркеров требуют больше ресурсов
+          memory: 768M  # Увеличили лимит памяти
         reservations:
           cpus: '0.2'
           memory: 128M
@@ -134,11 +137,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '0.3'  # Слегка уменьшили лимит
+          memory: 256M  # Слегка уменьшили лимит
         reservations:
           cpus: '0.05'
-          memory: 128M
+          memory: 64M
 
 networks:
   default:
