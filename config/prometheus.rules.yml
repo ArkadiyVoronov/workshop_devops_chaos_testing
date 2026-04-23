@@ -15,7 +15,7 @@ groups:
       - alert: HighLatency
         expr: |
           histogram_quantile(0.95, rate(fintech_request_latency_seconds_bucket[5m])) > 2
-        for: 1m
+        for: 45s
         labels:
           severity: warning
         annotations:
@@ -25,7 +25,7 @@ groups:
       - alert: HighErrorRate
         expr: |
           (rate(fintech_requests_total{status=~"5.."}[5m]) / rate(fintech_requests_total[5m])) > 0.1
-        for: 1m
+        for: 45s
         labels:
           severity: warning
         annotations:
@@ -34,17 +34,17 @@ groups:
 
       - alert: DBSlowTransactions
         expr: fintech_active_transactions > 10
-        for: 2m
+        for: 35s
         labels:
           severity: warning
         annotations:
           summary: "БД: много активных транзакций"
-          description: "Количество активных транзакций ({{ $value }}) превышает 10."
+          description: "Количество активных транзакций ({{ $value }}) превышает порог 10. БД не справляется.."
 
       - alert: MemoryPressure
         # ВАЖНО: Имя контейнера 'fintech-app' должно совпадать с container_name в docker-compose.yml
         expr: container_memory_usage_bytes{container="fintech-app"} > 450e6
-        for: 1m
+        for: 45s
         labels:
           severity: critical
         annotations:

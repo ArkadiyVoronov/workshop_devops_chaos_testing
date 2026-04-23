@@ -120,11 +120,13 @@ def metrics():
 def get_balance():
     start = time.time()
     
-    # Используем контекстный менеджер, чтобы увеличить счетчик активных транзакций
-    # Это критично для Кейса 3 (DB Slow), чтобы видеть рост очереди в Grafana
+    # === КРИТИЧЕСКАЯ ПРАВКА ===
+    # Эта обертка увеличивает счетчик ACTIVE_TRANSACTIONS в момент входа
+    # и уменьшает его в момент выхода (даже при ошибке).
+    # Именно это создает "очередь", когда скрипт включает db_slow (sleep 2s).
     with db_transaction():
         try:
-            inject_failures()
+            inject_failures()  # Здесь срабатывает искусственная задержка (2 сек)
             
             conn = psycopg2.connect(os.getenv('DATABASE_URL'))
             cur = conn.cursor()
