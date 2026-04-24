@@ -11,7 +11,7 @@
 
 ## Inject
 ```bash
-bash scripts/run_db_slow.sh
+bash scripts/03_run_db_slow.sh
 ```
 
 ## Как наблюдаем

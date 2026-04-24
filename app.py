@@ -42,19 +42,14 @@ def inject_failures():
     if state['error_rate'] > 0 and random.randint(1, 100) <= state['error_rate']:
         raise Exception("Simulated random failure")
     
-    # Утечка памяти
-    if state['memory_leak_mb'] > 0:
-        _leaked_memory.append(bytearray(state['memory_leak_mb'] * 1024 * 1024))
-    
     # Медленная БД
     if state['db_slow']:
         time.sleep(2)
 
-    # Утечка памяти - выделяем память и НЕ освобождаем
+    # Утечка памяти - выделяем память и НЕ освобождаем (только один раз)
     if state['memory_leak_mb'] > 0:
         global _memory_leak_active
         _memory_leak_active = True
-        # Выделяем 10 MB за каждый запрос, но только если ещё не достигли лимита
         leak_size = state['memory_leak_mb'] * 1024 * 1024
         # Проверяем общий размер утечки
         current_leak = sum(len(b) for b in _leaked_memory)
@@ -78,7 +73,7 @@ def index():
     return jsonify({
         "service": "fintech-api",
         "version": "2.0.0",
-        "endpoints": ["/health", "/metrics", "/api/balance", "/api/transfer", "/api/failures", "/api/reset"]
+        "endpoints": ["/health", "/metrics", "/api/balance", "/api/balance-bulk", "/api/transfer", "/api/failures", "/api/reset"]
     })
 
 @app.route('/health')
@@ -145,6 +140,35 @@ def get_balance():
         except Exception as e:
             REQUEST_COUNT.labels(method='GET', endpoint='/api/balance', status='500').inc()
             return jsonify({"error": str(e)}), 500
+
+@app.route('/api/balance-bulk', methods=['POST'])
+def balance_bulk():
+    """Запускает N параллельных потоков с запросами к БД для создания очереди active_transactions"""
+    data = request.get_json() or {}
+    n = data.get('count', 10)
+
+    def _query():
+        with db_transaction():
+            try:
+                conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+                cur = conn.cursor()
+                cur.execute("SELECT account_number, balance FROM accounts WHERE user_id = 1")
+                cur.fetchone()
+                cur.close()
+                conn.close()
+            except:
+                pass
+
+    threads = []
+    for _ in range(n):
+        t = threading.Thread(target=_query)
+        t.start()
+        threads.append(t)
+
+    for t in threads:
+        t.join(timeout=15)
+
+    return jsonify({"status": "ok", "threads": n})
 
 @app.route('/api/transfer', methods=['POST'])
 def transfer():

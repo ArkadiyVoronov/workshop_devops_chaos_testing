@@ -9,11 +9,11 @@ STAGES=5
 # Длительность каждой стадии в секундах
 STAGE_DURATION=8
 # Интервал между запросами (сек)
-TRAFFIC_INTERVAL=0.15
+TRAFFIC_INTERVAL=0.20
 # Базовый процент ошибок на первой стадии
-BASE_ERROR_RATE=10
+BASE_ERROR_RATE=20
 # Шаг увеличения ошибок на каждой стадии (%)
-ERROR_STEP=10
+ERROR_STEP=30
 # URL эндпоинта для тестирования (используем /api/balance, так как он нагружает БД)
 API_URL="http://localhost:5000/api/balance"
 

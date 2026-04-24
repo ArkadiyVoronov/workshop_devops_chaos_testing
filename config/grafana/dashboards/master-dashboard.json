@@ -96,7 +96,7 @@
           "sort": "desc"
         }
       },
-      "title": "🚀 Traffic: Total RPS vs Errors",
+      "title": " Traffic: Total RPS vs Errors",
       "type": "timeseries",
       "targets": [
         {
@@ -202,7 +202,7 @@
         }
       },
       "title": "⏱️ Latency: P50, P95, P99",
-      "description": "P95 > 2s triggers alert",
+      "description": "P95 > 2s triggers alert (Case 1)",
       "type": "timeseries",
       "targets": [
         {
@@ -317,6 +317,7 @@
         }
       },
       "title": "⚙️ App CPU Usage (%)",
+      "description": "Spikes during GC or heavy load (Case 4/5)",
       "type": "timeseries",
       "targets": [
         {
@@ -331,131 +332,202 @@
       ]
     },
     {
-  "datasource": {
-    "type": "prometheus",
-    "uid": "PBFA97CFB590B2093"
-  },
-  "fieldConfig": {
-    "defaults": {
-      "color": {
-        "mode": "palette-classic"
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
       },
-      "custom": {
-        "axisLabel": "Активные транзакции",
-        "axisPlacement": "auto",
-        "barAlignment": 0,
-        "drawStyle": "line",
-        "fillOpacity": 40,
-        "gradientMode": "scheme",
-        "hideFrom": {
-          "legend": false,
-          "tooltip": false,
-          "viz": false
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "Bytes",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 300000000
+              },
+              {
+                "color": "red",
+                "value": 450000000
+              }
+            ]
+          },
+          "unit": "bytes"
         },
-        "lineInterpolation": "stepAfter",
-        "lineWidth": 3,
-        "pointSize": 5,
-        "scaleDistribution": {
-          "type": "linear"
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "showPoints": "never",
-        "spanNulls": false,
-        "stacking": {
-          "group": "A",
-          "mode": "none"
-        },
-        "thresholdsStyle": {
-          "mode": "line+area"
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
         }
       },
-      "mappings": [],
-      "thresholds": {
-        "mode": "absolute",
-        "steps": [
-          {
-            "color": "green",
-            "value": null
+      "title": "💾 App Memory Usage (Case 4)",
+      "description": "Alert if > 450MB. Uses image label for reliability.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
           },
-          {
-            "color": "yellow",
-            "value": 5
-          },
-          {
-            "color": "red",
-            "value": 10
-          }
-        ]
-      },
-      "unit": "short",
-      "min": 0,
-      "max": 20
+          "expr": "container_memory_usage_bytes{image=\"workshop_devops_chaos_testing-app\"}",
+          "legendFormat": "App Memory",
+          "refId": "A"
+        }
+      ]
     },
-    "overrides": []
-  },
-  "gridPos": {
-    "h": 8,
-    "w": 12,
-    "x": 0,
-    "y": 18
-  },
-  "id": 5,
-  "options": {
-    "legend": {
-      "calcs": ["mean", "max", "lastNotNull"],
-      "displayMode": "table",
-      "placement": "bottom",
-      "showLegend": true
-    },
-    "tooltip": {
-      "mode": "multi",
-      "sort": "desc"
-    }
-  },
-  "title": "🗄️ Очередь запросов к БД (Active Tx)",
-  "description": "Рост выше 10 означает, что БД захлебнулась (Кейс 3). Красная зона!",
-  "type": "timeseries",
-  "targets": [
     {
       "datasource": {
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "expr": "fintech_active_transactions",
-      "legendFormat": "Active Transactions",
-      "refId": "A",
-      "instant": false,
-      "range": true
-    }
-  ],
-  "alert": {
-    "name": "DB Queue Alert",
-    "conditions": [
-      {
-        "evaluator": {
-          "params": [10],
-          "type": "gt"
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "Count",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 3,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0,
+          "max": 20
         },
-        "operator": {
-          "type": "and"
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "query": {
-          "params": ["A", "5m", "now"]
-        },
-        "reducer": {
-          "params": [],
-          "type": "avg"
-        },
-        "type": "query"
-      }
-    ],
-    "executionErrorState": "alerting",
-    "frequency": "60s",
-    "handler": 1,
-    "message": "Очередь запросов к БД превысила 10 транзакций!",
-    "noDataState": "no_data",
-    "notifications": []
-  }
-},
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "️ Queue: Active DB Transactions (Case 3)",
+      "description": "Growth > 10 means DB is choking. Red zone!",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "fintech_active_transactions",
+          "legendFormat": "Active Transactions",
+          "refId": "A"
+        }
+      ]
+    },
     {
       "datasource": {
         "type": "prometheus",
@@ -505,7 +577,7 @@
         },
         "textMode": "value_and_name"
       },
-      "title": "🚨 Активные алерты (Firing)",
+      "title": "🚨 Active Alerts (Firing)",
       "type": "stat",
       "targets": [
         {
@@ -526,7 +598,7 @@
   "tags": [
     "fintech",
     "workshop",
-    "master-v6-final"
+    "master-v7-all-cases"
   ],
   "templating": {
     "list": []
@@ -537,8 +609,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Fintech Workshop - Master Dashboard (Final)",
-  "uid": "fintech-master-final",
+  "title": "Fintech Workshop - Master Dashboard (All Cases)",
+  "uid": "fintech-master-all",
   "version": 1,
   "weekStart": ""
 }

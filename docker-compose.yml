@@ -24,9 +24,11 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    # ИЗМЕНЕНИЕ: Запуск через Gunicorn с 10 воркерами для параллельной обработки запросов
-    # Это необходимо, чтобы метрика Active Transactions могла расти (кейс 3)
-    command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "10", "--threads", "2", "app:app"]
+    # ВНИМАНИЕ: _failure_state и счётчики Prometheus хранятся в памяти процесса.
+    # При workers > 1 POST /api/failures и /metrics могут попадать в разные воркеры,
+    # что нарушает видимость метрик и алертов.
+    # Для демо используем 1 воркер. Для нагрузочного теста Active Transactions - workers: 10.
+    command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--threads", "2", "app:app"]
     deploy:
       resources:
         limits:

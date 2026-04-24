@@ -11,7 +11,7 @@
 
 ## Inject
 ```bash
-bash scripts/run_latency.sh
+bash scripts/01_run_latency.sh
 ```
 
 ## Как наблюдаем

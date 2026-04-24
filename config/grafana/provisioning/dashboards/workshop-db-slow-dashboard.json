@@ -22,7 +22,20 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -41,12 +54,12 @@
       },
       "targets": [
         {
-          "expr": "rate(fintech_requests_total[1m])",
-          "legendFormat": "RPS",
+          "expr": "fintech_active_transactions",
+          "legendFormat": "active_tx",
           "refId": "A"
         }
       ],
-      "title": "Request Rate (RPS)",
+      "title": "Active Transactions (порог алерта: 10)",
       "type": "timeseries"
     },
     {
@@ -72,24 +85,24 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(fintech_request_latency_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, rate(fintech_request_latency_seconds_bucket[30s]))",
           "legendFormat": "p95",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.99, rate(fintech_request_latency_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.99, rate(fintech_request_latency_seconds_bucket[30s]))",
           "legendFormat": "p99",
           "refId": "B"
         }
       ],
-      "title": "Latency p95/p99",
+      "title": "Latency P95/P99 (окно 30s)",
       "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 8
       },
@@ -102,20 +115,20 @@
       },
       "targets": [
         {
-          "expr": "(sum(rate(fintech_requests_total{status=~\"5..\"}[1m])) / sum(rate(fintech_requests_total[1m]))) or vector(0)",
-          "legendFormat": "error_rate",
+          "expr": "rate(fintech_requests_total{endpoint=\"/api/balance\"}[30s])",
+          "legendFormat": "rps_balance",
           "refId": "A"
         }
       ],
-      "title": "Error Rate (5xx)",
+      "title": "Throughput /api/balance (RPS)",
       "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 8,
         "y": 8
       },
       "id": 4,
@@ -127,21 +140,21 @@
       },
       "targets": [
         {
-          "expr": "fintech_active_transactions",
-          "legendFormat": "active_tx",
+          "expr": "(sum(rate(fintech_requests_total{status=~\"5..\"}[30s])) / sum(rate(fintech_requests_total[30s]))) or vector(0)",
+          "legendFormat": "error_rate",
           "refId": "A"
         }
       ],
-      "title": "Active Transactions",
+      "title": "Error Rate (30s)",
       "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 16
+        "w": 8,
+        "x": 16,
+        "y": 8
       },
       "id": 5,
       "options": {
@@ -152,18 +165,18 @@
       },
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{container=\"fintech-app\"}",
-          "legendFormat": "app_memory",
+          "expr": "ALERTS{alertname=\"DBSlowTransactions\"}",
+          "legendFormat": "{{alertstate}}",
           "refId": "A"
         }
       ],
-      "title": "App Memory (cAdvisor)",
+      "title": "Alert: DBSlowTransactions",
       "type": "timeseries"
     }
   ],
   "schemaVersion": 36,
   "style": "dark",
-  "tags": ["workshop", "fintech"],
+  "tags": ["workshop", "fintech", "db-slow"],
   "templating": {
     "list": []
   },
@@ -173,7 +186,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Fintech Workshop: Основные метрики",
-  "uid": "fintech-workshop-dashboard",
-  "version": 2
+  "title": "Fintech Workshop: DB Slow (Кейс 3)",
+  "uid": "fintech-db-slow-dashboard",
+  "version": 1
 }

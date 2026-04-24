@@ -11,7 +11,7 @@
 
 ## Inject
 ```bash
-bash scripts/run_error_rate.sh
+bash scripts/02_run_error_rate.sh
 ```
 
 ## Как наблюдаем
@@ -26,4 +26,3 @@ bash scripts/run_error_rate.sh
 ## Постмортем
 - Какие зависимости (DB, external) могли вызвать ошибочный ответ?
 - Что меняем в продакшене, чтобы уменьшить 5xx?
-

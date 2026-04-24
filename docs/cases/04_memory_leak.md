@@ -10,7 +10,7 @@
 
 ## Inject
 ```bash
-bash scripts/run_memory_leak.sh
+bash scripts/04_run_memory_leak.sh
 ```
 
 ## Нагрузка

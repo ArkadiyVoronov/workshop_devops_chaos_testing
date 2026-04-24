@@ -10,7 +10,7 @@
 
 ## Inject
 ```bash
-bash scripts/run_chaos_mix.sh
+bash scripts/05_run_chaos_mix.sh
 ```
 
 ## Как наблюдаем
